@@ -5,6 +5,7 @@
 # kit-deploymentizer
 [ ![Codeship Status for InVisionApp/kit-deploymentizer](https://codeship.com/projects/861e8850-1082-0134-1572-2a42c1ba701a/status?branch=master)](https://codeship.com/projects/157006)
 [![Docker Repository on Quay](https://quay.io/repository/invision/kit-deploymentizer/status "Docker Repository on Quay")](https://quay.io/repository/invision/kit-deploymentizer)
+[![npm version](https://badge.fury.io/js/kit-deploymentizer.svg)](https://badge.fury.io/js/kit-deploymentizer)
 [![Dependency Status](https://david-dm.org/InVisionApp/kit-deploymentizer.svg)](https://david-dm.org/InVisionApp/kit-deploymentizer)
 [![devDependency Status](https://david-dm.org/InVisionApp/kit-deploymentizer/dev-status.svg)](https://david-dm.org/InVisionApp/kit-deploymentizer#info=devDependencies)
 
