@@ -1,0 +1,16 @@
+app:
+  build:
+    image: quay.io/invision/kit-deploymentizer
+    dockerfile_path: Dockerfile
+  cached: true
+  entrypoint: npm run
+  volumes:
+    - example:/example
+    - test:/test
+publish:
+  image: quay.io/invision/docker-node-publisher:v1
+  encrypted_env_file: codeship-publish.env.encrypted
+  volumes:
+    - .:/var/publish
+  environment:
+    - PUBLISH_PATH=/var/publish

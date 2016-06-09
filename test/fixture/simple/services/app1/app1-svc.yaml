@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app1-svc
+  labels:
+    app: invisionapp
+    tier: frontend
+spec:
+  selector:
+    name: app1-pod

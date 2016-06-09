@@ -1,0 +1,47 @@
+#!/usr/bin/env node
+
+var logger = require("log4js").getLogger();
+var program = require("commander");
+var packageJson = require("../package.json");
+var Deploymentizer = require("./lib/deploymentizer");
+var exit = process.exit;
+
+var parseBoolean = function(str) {
+	return (str === "true");
+};
+
+program
+	.version(packageJson.version)
+	.usage("[options]")
+	.option("-c, --clean <boolean>", "Set if the output directory should be deleted and re-created before generating manifest files", parseBoolean, parseBoolean(process.env.CLEAN))
+	.option("-o, --output <output>", "Set output directory", process.env.OUTPUT)
+	.option("-s --save <boolean>", "Sets if the generated manifest files are saved to the output diretory or not", parseBoolean, parseBoolean(process.env.SAVE))
+	.option("-p, --pattern <pattern>", "Set glob pattern to load files", process.env.PATTERN)
+	.parse(process.argv)
+;
+
+var deploymentizer = new Deploymentizer({
+	clean: program.clean,
+	save: program.save,
+	output: program.output
+});
+
+// Enable logging of all events from the deploymentizer
+deploymentizer.events.on("info", function(message) {
+	logger.info(message);
+});
+deploymentizer.events.on("fatal", function(message) {
+	logger.fatal(message);
+});
+
+// Run the generator
+deploymentizer
+	.generate(program.pattern)
+	.then(function() {
+		exit(0);
+	})
+	.catch(function(err) {
+		logger.fatal(err);
+		throw new Error(err);
+	})
+	.done();

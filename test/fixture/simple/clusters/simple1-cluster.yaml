@@ -1,0 +1,33 @@
+kind: Cluster
+metadata:
+  name: simple1-cluster
+spec:
+  # Services
+  - fromFile: ./../services/app1/app1-svc.yaml
+  - fromFile: ./../services/app2/app2-svc.yaml
+  
+  # Deployments
+  - fromFile: ./../services/app1/app1-deployment.yaml
+    spec:
+      template:
+        spec:
+          containers:
+            - name: app1-con
+              env:
+                - name: DEBUG
+                  value: "1"
+                - name: DOMAIN
+                  fromFile: ./../environments/domain-env.yaml
+                - name: SECRET
+                  fromFile: ./../environments/secret-env.yaml
+  - fromFile: ./../services/app2/app2-deployment.yaml
+    spec:
+      template:
+        spec:
+          containers:
+            - name: app2-con
+              env:
+                - name: DOMAIN
+                  fromFile: ./../environments/domain-env.yaml
+                - name: SECRET
+                  fromFile: ./../environments/secret-env.yaml

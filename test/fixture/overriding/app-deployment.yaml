@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app1-deployment
+spec:
+  replicas: 2
+  selector:
+    name: app1-pod
+  template:
+    metadata:
+      labels:
+        name: app1-pod
+    spec:
+      containers:
+        - name: app1-con
+          image: node:5.5.0-slim
+          env:
+            - name: DEBUG
+              value: "0"

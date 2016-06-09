@@ -1,0 +1,40 @@
+{
+  "name": "kit-deploymentizer",
+  "version": "0.0.0-semantic-release",
+  "description": "This will be a docker image that will intelligently build deployment files as to allow reusability of environment variables and other forms of configuration. It will also support aggregating these deployments for multiple clusters. In the end, it will generate a list of clusters and a list of deployment files for each of these clusters.",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/InVisionApp/kit-deploymentizer"
+  },
+  "author": "Chesley Brown <chesley@invisionapp.com>",
+  "license": "proprietary",
+  "bugs": {
+    "url": "https://github.com/InVisionApp/kit-deploymentizer/issues"
+  },
+  "homepage": "https://github.com/InVisionApp/kit-deploymentizer",
+  "main": "./src/index.js",
+  "bin": "./src/deploymentizer",
+  "scripts": {
+    "test-unit": "mocha --recursive test/unit",
+    "test-functional": "mocha --recursive test/functional",
+    "lint": "eslint src test"
+  },
+  "dependencies": {
+    "bluebird": "3.2.2",
+    "commander": "2.9.0",
+    "glob": "6.0.4",
+    "log4js": "0.6.33",
+    "js-yaml": "3.5.2",
+    "lodash": "4.3.0",
+    "mkdirp": "0.5.1",
+    "rimraf": "2.5.2"
+  },
+  "devDependencies": {
+    "chai": "3.5.0",
+    "mocha": "2.4.5"
+  },
+  "files": [
+    "LICENSE",
+    "src"
+  ]
+}

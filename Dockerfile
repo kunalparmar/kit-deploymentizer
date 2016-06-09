@@ -1,0 +1,22 @@
+FROM quay.io/invision/alpine-node:5.5.0
+
+# Install node modules (allows for npm install to be cached until package.json changes)
+COPY .npmrc .npmrc
+COPY package.json package.json
+RUN npm install
+
+# Allow command-line access to all dependencies (eg `gulp`)
+ENV \
+	PATH=/node_modules/.bin:$PATH\
+	CLEAN=false\
+	OUTPUT=/generated\
+	SAVE=true\
+	PATTERN=/manifests/**/*-cluster.yaml\
+	LOG_NAME=kit-deploymentizer
+
+# Copy our source files to the service location
+COPY src /src
+
+VOLUME ["/generated", "/raw"]
+
+ENTRYPOINT ["./src/deploymentizer"]

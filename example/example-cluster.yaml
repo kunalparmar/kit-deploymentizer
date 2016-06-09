@@ -1,0 +1,6 @@
+kind: Cluster
+metadata:
+  name: example-cluster
+spec:
+  - fromFile: app-svc.yaml
+  - fromFile: app-deployment.yaml

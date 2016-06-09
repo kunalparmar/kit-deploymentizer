@@ -1,0 +1,5 @@
+env:
+  - name: DEBUG
+    value: "1"
+  - name: DOMAIN
+    value: "google.com"
