@@ -1,81 +1,101 @@
 "use strict";
 
-var _ = require("lodash");
-var EventEmitter = require("events");
-var Promise = require("bluebird");
-var generator = require("../utils/generator");
-var saveCluster = require("../utils/save-cluster");
-var mkdirp = Promise.promisify(require("mkdirp"));
-var rimraf = Promise.promisify(require("rimraf"));
+const _ = require("lodash");
+const EventEmitter = require("events");
+const Promise = require("bluebird");
+const Generator = require("./generator");
+const yamlHandler = require("../util/yaml-handler");
+const fse = require("fs-extra");
+
+const EVENT_TYPE_INFO = "info";
+const EVENT_TYPE_WARN = "warn";
 
 class DeploymentizerEmitter extends EventEmitter {}
 
+/**
+ * Main class used to process deployment files converting templates into deployable manifests.
+ */
 class Deploymentizer {
-	constructor(options) {
-		this.options = _.merge({
-			clean: false,
-			save: false,
-			output: undefined
-		}, options);
-		this.events = new DeploymentizerEmitter();
-	}
+  constructor(options) {
+    this.options = _.merge({
+      clean: false,
+      save: false,
+      loadPath: undefined,
+      outputPath: undefined
+    }, options);
+    this.events = new DeploymentizerEmitter();
+  }
 
-	generate(pattern) {
-		var self = this;
-		return new Promise(function(resolve, reject) {
-			try {
-				// Run the generator
-				var clusters = generator(pattern);
-				self.events.emit("info", "Found " + clusters.length + " cluster files");
+  /**
+   * Main entrypoint. Handles loading var files and cluster definitions. These
+   * are merged before rendering the deployment manifests.
+   */
+  process() {
+    this.events.emit(EVENT_TYPE_INFO, `Initialization: ${JSON.stringify(this.options)}`);
 
-				// Clean directory (if enabled)
-				var cleanPromise = Promise.resolve();
-				if (self.options.clean) {
-					self.events.emit("info", "Cleaning output directory: " + self.options.output);
-					cleanPromise = rimraf(self.options.output);
-				}
+    if (this.options.clean) {
+      this.events.emit(EVENT_TYPE_INFO, `Cleaning: ${this.options.outputPath}/*`);
+      fse.removeSync(`${this.options.outputPath}/*`);
+    }
 
-				cleanPromise
-					.then(function() {
-						// Make output dir if it doesn't exist
-						self.events.emit("info", "Generating output directory: " + self.options.output);
-						return mkdirp(self.options.output);
-					})
-					.then(function() {
-						// Save the cluster files to disk
-						if (self.options.save) {
-							self.events.emit("info", "Saving manifest files to '" + self.options.output + "'...");
-							var promises = [];
-							_.each(clusters, function(cluster) {
-								var promise = saveCluster(self.options.output, cluster)
-									.then(function() {
-										self.events.emit("info", "Successfully generated manifests files for '" + cluster.metadata.name + "'");
-									});
-								promises.push(promise);
-							});
+    this.events.emit(EVENT_TYPE_INFO, `Processing directory: ${this.options.loadPath}`);
 
-							return Promise
-								.all(promises)
-								.then(function() {
-									self.events.emit("info", "Successfully generated all manifest files");
-								});
-						} else {
-							self.events.emit("info", "Successfully parsed cluster files, but did not save any manifest files");
-						}
-					})
-					.then(function() {
-						resolve(0);
-					})
-					.catch(function(err) {
-						self.events.emit("fatal", err);
-						reject(err);
-					});
-			} catch (err) {
-				self.events.emit("fatal", err);
-				reject(err);
-			}
-		});
-	}
+    return Promise.coroutine(function* () {
+      const baseClusterDef = yield yamlHandler.loadBaseDefinitions(this.options.loadPath);
+      this.events.emit(EVENT_TYPE_INFO, "Loaded base cluster definition");
+
+      // TODO: Convert to Promise
+      // Load the type configs into their own Map
+      const typeDefinitions = yamlHandler.loadTypeDefinitions();
+
+      // TODO: Convert to Promise
+      // Load image tag (usage based on Resource Spec or cluster spec)
+      const imageResources = yamlHandler.loadImageDefinitions(`${this.options.loadPath}/images/invision`);
+
+      // Load the /cluster 'cluster.yaml' and 'configuration-var.yaml'
+      return yamlHandler.loadClusterDefinitions(`${this.options.loadPath}/clusters`)
+        .then( (clusterDefs) => {
+          let promises = [];
+          //Merge the definitions, render templates and save (if enabled)
+          clusterDefs.forEach( (def) => {
+            promises.push( this.processClusterDef( def, typeDefinitions, baseClusterDef, imageResources ) );
+          });
+
+          return Promise.all(promises).then( () => {
+            this.events.emit(EVENT_TYPE_INFO, `Finished processing files...` );
+          });
+        });
+    });
+  }
+
+  /**
+   * Process files for a given cluster. This includes merging configuration files, and rendering templates.
+   *
+   * @param  {[type]} def             Cluster Definition
+   * @param  {[type]} typeDefinitions Map of Type configuration
+   * @param  {[type]} baseClusterDef  Base Cluster Definition
+   * @param  {[type]} imageResources  ImageResource Map
+   */
+  processClusterDef(def, typeDefinitions, baseClusterDef, imageResources) {
+    return Promise.try( () => {
+      if (def.type()) {
+        const type = typeDefinitions[def.type()];
+        if (!type) { throw new Error(`UnSupported Type ${def.type()}`); }
+        // Merge the type definition then the base definition
+        def.apply(type);
+      } else {
+        this.events.emit(EVENT_TYPE_WARN, `No Type configured for cluster ${def.name()}, skipping` );
+      }
+      // Merge with the Base Definitions.
+      def.apply(baseClusterDef);
+      this.events.emit(EVENT_TYPE_INFO, "Done Merging Cluster Definitions");
+      // apply the correct image tag based on cluster type or resource type
+      // generating the templates for each resource (if not disabled), using custom ENVs and envs from resource tags.
+      // Save files out
+      const generator = new Generator(def, imageResources, this.options.loadPath, this.options.outputPath, this.options.save);
+      return generator.process();
+    });
+  }
 }
 
 module.exports = Deploymentizer;

@@ -1,7 +1,0 @@
-fromFile: ./master.yaml
-spec:
-  template:
-    spec:
-      containers:
-        - name: node-con
-          image: node:develop

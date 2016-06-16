@@ -1,0 +1,11 @@
+kind: ClusterNamespace
+metadata:
+  name: example-1
+  branch: master
+resources:
+  # Define resources that should be overridden here.
+  # Supported tags are name (required), and one of [branch, envs, disable]
+
+  # auth
+  - name: auth
+    branch: develop

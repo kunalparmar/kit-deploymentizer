@@ -7,11 +7,11 @@ RUN npm install
 
 # Allow command-line access to all dependencies (eg `gulp`)
 ENV \
-	PATH=/node_modules/.bin:$PATH\
-	CLEAN=false\
-	OUTPUT=/generated\
-	SAVE=true\
-	PATTERN=/manifests/**/*-cluster.yaml\
+	PATH=/node_modules/.bin:$PATH \
+	CLEAN=true \
+	OUTPUT=/generated \
+	SAVE=true \
+	LOAD=/manifests \
 	LOG_NAME=kit-deploymentizer
 
 # Copy our source files to the service location
