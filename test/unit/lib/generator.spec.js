@@ -8,13 +8,24 @@ const Generator = require("../../../src/lib/generator");
 const fse = require("fs-extra");
 const path = require("path");
 
+const configStub = {
+  fetch: function() {
+    return  Promise.resolve([
+      { name: "ENV_ONE",   value: "value-one" },
+      { name: "ENV_TWO",   value: "value-two" },
+      { name: "ENV_THREE", value: "value-three" },
+      { name: "ENV_FOUR",  value: "value-four" },
+    ]);
+  }
+}
+
 describe("Generator", () => {
 	describe("create service file", () => {
 		it("should create valid service file", (done) => {
 			return Promise.coroutine(function* () {
 				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture");
 				const clusterDef = clusterDefs[0];
-				const generator = new Generator(clusterDef, {}, "./test/fixture", os.tmpdir(), true);
+				const generator = new Generator(clusterDef, {}, "./test/fixture", os.tmpdir(), true, configStub);
 				expect(clusterDef).to.exist;
 				if (!fse.existsSync( path.join(os.tmpdir(), clusterDef.name())) ) {
 					fse.mkdirsSync( path.join(os.tmpdir(), clusterDef.name()) );
@@ -39,19 +50,22 @@ describe("Generator", () => {
 			return Promise.coroutine(function* () {
 				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture");
 				const clusterDef = clusterDefs[0];
-				const generator = new Generator(clusterDef, imageResources, "./test/fixture", os.tmpdir(), true);
+				const generator = new Generator(clusterDef, imageResources, "./test/fixture", os.tmpdir(), true, configStub);
 				expect(clusterDef).to.exist;
 				if (!fse.existsSync( path.join(os.tmpdir(), clusterDef.name())) ) {
 					fse.mkdirsSync( path.join(os.tmpdir(), clusterDef.name()) );
 				}
-				const localConfig = generator._createLocalConfiguration(clusterDef.configuration(), "auth", clusterDef.resources().auth);
+				const localConfig = yield generator._createLocalConfiguration(clusterDef.configuration(), "auth", clusterDef.resources().auth);
+        console.log("Local Congfig::: %j", localConfig);
 				expect(localConfig).to.exist;
 				expect(localConfig.svc).to.exist;
 				console.log("localConfig: %j", localConfig);
 				expect(localConfig).to.not.equal(clusterDef.configuration());
 				expect(localConfig.name).to.equal("auth");
 				expect(localConfig.image).to.equal("SOME-DEVELOP-IMAGE");
-				expect(localConfig.env).to.include({name: "test", value: "testvalue"});
+				expect(localConfig.env).to.include({ name: "test", value: "testvalue" });
+				expect(localConfig.env).to.include({ name: "ENV_ONE",   value: "value-one" });
+				expect(localConfig.env).to.include({ name: "ENV_THREE", value: "value-three" });
 				done();
 			})().catch( (err) => {
 				done(err);

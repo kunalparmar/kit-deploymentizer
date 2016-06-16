@@ -17,6 +17,7 @@ program
 	.option("-o, --output <output>", "Set output directory to write files to", process.env.OUTPUT)
 	.option("-l, --load <load>", "Set load directory to read from", process.env.LOAD)
 	.option("-s --save <boolean>", "Sets if the generated manifest files are saved to the output diretory or not", parseBoolean, parseBoolean(process.env.SAVE))
+  .option("-p --plugin <plugin>", "Sets the Confguration plugin to use")
 	.parse(process.argv)
 ;
 
@@ -24,7 +25,8 @@ var deploymentizer = new Deploymentizer({
 	clean: program.clean,
 	save: program.save,
 	outputPath: program.output,
-	loadPath: program.load
+	loadPath: program.load,
+  configPlugin: ( program.plugin || "./plugin/env-api-client" )
 });
 
 // Enable logging of all events from the deploymentizer
