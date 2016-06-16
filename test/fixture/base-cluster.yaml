@@ -1,0 +1,30 @@
+kind: ClusterNamespace
+metadata:
+  name: base
+  branch: master
+resources:
+  auth:
+    branch: develop
+    file: ./some/path
+    svc:
+      name: auth-svc
+      labels:
+        - name: "app"
+          value: "invisionapp"
+    env:
+      - name: test
+        value: testbase
+  activity:
+    file: ./some/path
+
+  envsecret:
+    file: ./some/path
+    env:
+      - name: AWS_USER
+        encode: "base64"
+        external: true
+      - name: AWS_PASSWORD
+        encode: "base64"
+        external: true
+      - name: GITHUB_TOKEN
+        external: true

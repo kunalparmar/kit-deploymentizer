@@ -1,5 +1,0 @@
-people:
-  - name: chesley
-    spec:
-      fromFile: age.yaml
-    fromFile: person.yaml

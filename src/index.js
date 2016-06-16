@@ -1,9 +1,9 @@
 "use strict";
 
-var Deploymentizer = require("./lib/deploymentizer");
+const Deploymentizer = require("./lib/deploymentizer");
 
-var KitDeploymentizer = {
-	Deploymentizer: Deploymentizer
+const KitDeploymentizer = {
+  Deploymentizer: Deploymentizer
 };
 
 module.exports = KitDeploymentizer;

@@ -1,132 +1,273 @@
-<p align="center">
-  <a href="https://invisionapp.github.io/kit/">
-    <img src="https://github.com/InVisionApp/kit/raw/master/media/kit-logo-horz-sm.png">
-  </a>
-</p>
-
 # kit-deploymentizer
-[ ![Codeship Status for InVisionApp/kit-deploymentizer](https://codeship.com/projects/861e8850-1082-0134-1572-2a42c1ba701a/status?branch=master)](https://codeship.com/projects/157006)
-[![Docker Repository on Quay](https://quay.io/repository/invision/kit-deploymentizer/status "Docker Repository on Quay")](https://quay.io/repository/invision/kit-deploymentizer)
-[![npm version](https://badge.fury.io/js/kit-deploymentizer.svg)](https://badge.fury.io/js/kit-deploymentizer)
-[![Dependency Status](https://david-dm.org/InVisionApp/kit-deploymentizer.svg)](https://david-dm.org/InVisionApp/kit-deploymentizer)
-[![devDependency Status](https://david-dm.org/InVisionApp/kit-deploymentizer/dev-status.svg)](https://david-dm.org/InVisionApp/kit-deploymentizer#info=devDependencies)
+![Team](https://img.shields.io/badge/team-container_application_lifecycle-lightgrey.svg)
+![Status](https://img.shields.io/badge/status-live-green.svg)
+[![Slack](https://img.shields.io/badge/slack-%23docker--kubernetes-blue.svg)](https://invisionapp.slack.com/messages/docker-kubernetes/)
+[![Codeship](https://codeship.com/projects/1106f660-adcb-0133-cbe3-167728a5fef7/status?branch=master)](https://codeship.com/projects/132140)
 
-This service intelligently builds deployment files as to allow reusability of environment variables and other forms of configuration. It also supports aggregating these deployments for multiple clusters. In the end, it generates a list of clusters and a list of deployment files for each of these clusters. Best used in collaboration with `kit-deployer` and `kit-image-deployer` to achieve a continuous deployment workflow.
+This will be a docker image that will intelligently build deployment files as to allow reusability of environment variables and other forms of configuration. It will also support aggregating these deployments for multiple clusters. In the end, it will generate a list of clusters and a list of deployment files for each of these clusters.
 
 ## How it works
 
-The `deploymentizer` will parse cluster yaml files and output the resulting Kubernetes files grouped by cluster. Cluster yaml files look like the following:
+The `deploymentizer` uses a combination of ``*-cluster.yaml` files for cluster information, `*-var.yaml` files for configuration, and Mustache templates to generate the deployment files for a Kubernetes cluster. The `deploymentizer` also supprts external services for retrieving ENV values that are passed to the templates during generation.
 
-```yaml
-# example-cluster.yaml
-kind: Cluster
-metadata:
-  name: example-cluster
-spec:
-  - fromFile: app-svc.yaml
-  - fromFile: app-deployment.yaml
+Deploymentizer uses base cluster definition files to define the over-all set of services and the configuration variables that will be used to generate the deployment files. Default values can be set here with the ability to override at the cluster type, and specific cluster level. ENV values are loaded from a external service. This service is loaded as an external plugin at runtime and the returned values are injected during template rendering.
+
+Each cluster has its own `cluster.yaml` and _optional_ `configuration-var.yaml` file that is used to override and extend the base cluster definition. The cluster file can be used to set the default branch to use for that cluster as well as the list of services to override or exclude.
+
+The `type` configuration files can be used to override/set default values based on which type of cluster is being deployed (testing, staging, production). This value is defined in the `cluster.yaml` file.
+
+The `image` files contain the docker image to use for each service. This is based on which branch the cluster (or individual service) is set to. This value is injected when rendering the template along with the other variables.
+
+When the `deploymentizer` is run, it will load the base-* files, the list of images, and the individual type files. Then it will load each cluster file, asynchronously merging in the base cluster definition, then the type configuration. Precedence goes from base -> type -> cluster with cluster overriding other values. Once that is complete it will render each template to a deployment/service file.
+
+### Base Setup
+
+An example directory layout would look like:
+
+```sh
+./manifests
+  base-cluster.yaml
+  base-var.yaml
+  ./clusters
+    ./[CLUSTER-NAME]
+      ./cluster.yaml
+      ./configuration-var.yaml
+    ./[CLUSTER-NAME]
+    ...
+  ./resources/
+    ./base-svc.yaml # This is the service template that is shared by all services that require a service
+    ./[RESOURCE-NAME]
+      ./[RESOURCE-NAME]-deployment.mustache
+    ./[RESOURCE-NAME]
+    ...
+  ./type
+    ./develop-var.yaml
+    ./production-var.yaml
+    ...
+  ./images/invision
+    ./[IMAGE-RESOURCE-NAME] # This comes from the base-cluster `resources.[RESOURCE].image_tag` field for each service.
+      ./develop.yaml
+      ./master.yaml
+      ./release.yaml
+      ...
+    ./[IMAGE-RESOURCE-NAME]
+    ...
+./generated # This is where the generated file are saved
+  ./[CLUSTER-NAME] # This comes from the `metadata.name` value of the cluster definition.
 ```
 
-The `metadata.name` property is used as the name of the folder to store all the files generated for this cluster in. Note the `fromFile` property. This is what allows you to reuse configuration files. The `fromFile` property will include the file it points to. More importantly you can use the `fromFile` property in your normal Kubernetes files allowing you to breakup your files into multiple files and reuse information however you like. Every item listed in the cluster `spec` array should amount to a full and valid Kubernetes file. For example, extending from the example above:
+### Key Files and types
 
-```yaml
-# app-svc.yaml
+This section describe the files used by the `deploymentizer` to render the cluster manifest files. These files are expected to exist in the `LOAD` directory passed in at startup.
+
+##### base-cluster.yaml
+
+Defines the over all list of resources. These are included by default in all local cluster configuration unless explicitly disabled.
+
+
+```
+kind: ClusterNamespace
+metadata:
+  name: base
+  branch: develop
+resources:
+  # Secrets
+  docker-quay-secret:
+    file: ./resources/secrets/docker-quay-secret.yaml
+
+  # Application Resources
+  auth:
+    file: ./resources/auth/auth-deployment.mustache
+    image_tag: node-auth
+    svc:
+      name: auth-svc
+      labels:
+        - name: "app"
+          value: "invisionapp"
+        - name: "tier"
+          value: "frontend"
+        - name: "role"
+          value: "service"
+  activity:
+    file: ./resources/activity/activity-deployment.mustache
+    image_tag: node-activity
+    svc:
+    ...
+```
+
+The `kind: ClusterNamespace` is used to determine what type of file this is (vs a `kind: ResourceConfig` for configuration). This file should list all deployable application resources. Each resource should contain at minimum a file, image_tag. If the resource requires a service, the values for that should be configured here also.
+* file defines the path to the resources musache template or yaml file if the file does not use a template.
+* image_tag indicates the name of the image directory that contains the `image` container values. NOTE: these are different than the Application Resource names.
+* svc (Optionally) configuration for a Service. If not present, no service will be generated.
+
+##### base-var.yaml
+
+Defines default configuration information for our kubernetes deployments.
+
+Example base-var.yaml might look like:
+
+```
+kind: ResourceConfig
+# Deployment specific defaults
+deployment:
+  replicaCount: 3
+  imagePullPolicy: IfNotPresent
+  livenessProbe:
+    path: /healthcheck
+    port: 80
+    initialDelaySeconds: 30
+    timeoutSeconds: 3
+  containerPort: 80
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+imagePullSecrets:
+  - secret: docker-quay-secret
+  - secret: docker-registry-secret
+
+```
+All values in this file are converted into data that is passed to the template rendering engine. All of these values can be overridden at the `type` or `cluster` level.
+
+* `kind: ResourceConfig` indicates a resource configuration file (vs a cluster file).
+
+
+##### `type/*-var.yaml`
+
+This is used to override values for a cluster of a given type. For example you can set the image pull policy and replicaCount for all develop clusters.
+
+An example *type* file:
+```
+# Cluster Type specific Configuration.
+#
+kind: ResourceConfig
+metadata:
+  type: develop
+deployment:
+  replicaCount: 5
+  imagePullPolicy: Always
+```
+
+##### `*-cluster.yaml` files
+Cluster specific files are used to override any values needed for a specific cluster. At the minimum it should contain the `kind`, and `metadata.(name, branch, type)` fields. This lets you override specific Resources, setting branch, disabling or adding specific ENV values.
+
+Supported `metadata`
+```
+metadata:
+  name: [Name of Cluster - required]
+  branch: [Branch used for deployment of cluster, can be overridden at the resource level]
+  type: [ type of cluster, used to import type specific deployment information, can be overridden at the resource level]
+```
+An example file would look like:
+
+```
+kind: ClusterNamespace
+metadata:
+  name: example-1
+  branch: master
+  type: develop
+resources:
+  # auth
+  auth:
+    branch: develop
+    env:
+      - name: [ENV_NAME]
+        value: [ENV_VALUE]
+      - name: [ENV_NAME]
+        external: true
+        encoding: base64
+
+  activity:
+    disable: false
+```
+You can override individual resource values here, including which branch a resource should be deployed from, deployment specific values, and ENVs that are only for this `cluster.resource`. ENVs can be both externally defined (at build time) or predefinded here.
+
+*External ENVs* are environment variables that are only available at build time. This allows the `deploymentizer` to generate a manifest using env values that may be to sensitive to commit to SourceControl. For example create a kubernetes secret from a template with the values injected at build time.
+
+The name of the external ENV must match the defined name in the `resource.[RESOURCE-NAME].env.name` definition.
+
+##### Disable a Service
+In order to disable a service for a specific cluster, add the `resources.[RESOURCE-NAME].disable: true`. This will keep the `deploymentizer` from generating a deployment/service file for that specific resource.
+
+##### Adding a Service
+You can add a service just for the cluster by defining the values here. This would allow you to test a service only on a specific cluster before rolling it out to all clusters. The required fields would be:
+
+```
+resources:
+  ...
+  [RESOURCE-NAME]:
+    file: [PATH-TO-MUSTACHE-TEMPLATE]
+    image_tag: [IMAGE-RESOURCE-NAME]
+    svc:
+      name: [SERVICE-NAME]
+      labels:
+        - name: [KEYS]
+          value: [VALUES]
+    env:
+      - [ENV_KEY]: [ENV_VALUE]
+        ...
+```
+
+The cluster specific configuration file is optional. If defined it would override the configuration defined by the Base/Type files. An example would be:
+
+```
+# Cluster specific Configuration
+#
+kind: ResourceConfig
+
+```
+
+
+### Templates
+
+Current implementation uses the Mustache template engine to render the templates. Documentation for Mustache can be found at [http://mustache.github.io/](http://mustache.github.io/).
+
+For an example the base-svc.mustache file looks like:
+
+```
 apiVersion: v1
 kind: Service
 metadata:
-  name: app-svc
-spec:
+  name: {{{svc.name}}}
+  labels:
+  {{#svc.labels}}
+    {{{name}}}: {{{value}}}
+  {{/svc.labels}}
+spec: {{{! If Ports are not defined, default to below }}}
+  {{svc.ports}}
+  {{^svc.ports}}
+  ports:
+    - name: web
+      port: 80
+      protocol: TCP
+    - name: web-ssl
+      port: 443
+      protocol: TCP
+  {{/svc.ports}}
   selector:
-    fromFile: app-selector.yaml
+    name: {{{name}}}-pod
+  {{svc.clusterIP}}
+
 ```
 
-```yaml
-# app-deployment.yaml
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  name: app-deployment
-spec:
-  replicas: 2
-  selector:
-    fromFile: app-selector.yaml
-  template:
-    metadata:
-      labels:
-        fromFile: app-selector.yaml
-    spec:
-      containers:
-        - name: app-con
-          image: node:5.5.0-slim
-          fromFile: app-env.yaml
-          env:
-            - name: DEBUG
-              value: "0"
+#### Plugin For ENV configuration
+The plugin module should export a single function, accepting the following parameters:
 ```
-
-```yaml
-# app-env.yaml
-env:
-  - name: DEBUG
-    value: "1"
-  - name: DOMAIN
-    value: "google.com"
+envConfig.fetch( serviceName, environment, cluster );
 ```
+The `fetch` function must return a Promise. Promises will be converted to bluebird promise via `Promise.resolve(envService.fetch( serviceName, environment, cluster ))`
 
-In the above example, the `DEBUG` env setting will be set to `0` (overriding the default of `1` in the `app-env.yaml`) and the deployment file will inherit the `DOMAIN=google.com` env setting.
+Any configuration values need by the plugin should be supplied via ENV vars. Calling this with any invalid values (ie wrong service, cluster, env) should return a error.  This will be logged and skipped - not halt processing.
 
-```yaml
-# app-selector.yaml
-name: app-pod
-```
+From the command line, include the path to the envConfig to use: --env-config = ../PATH-TO-PLUGIN
 
-With this `app-selector.yaml` file, the service and deployment file that is generated will inherit this `name: app-pod` setting. So you can set your selector in one file and reuse everywhere it's needed.
+This will be required at system startup and executed _asynchronously_ for every Resource listed in the cluster definition.
 
-You can use `fromFile` wherever you like and you can override settings wherever you need (including your `*-cluster.yaml` files).
 
-The files that are generated will be named based on the `metadata.name` property so this is required.
+#### Support for Secrets
 
-You can see see what this example generates by running:
+The `deploymentizer` will need to support generating a kubernetes secret file in a secure fashion. The `deploymentizer` supports reading ENVs at build time. These ENV's will be injected into the configuration that will be passed into the template engine for the resources template.
 
-1. `docker run --rm -v $(pwd)/generated:/generated -v $(pwd)/example:/example kit-deploymentizer --pattern /example/*-cluster.yaml`
-
-You should get a folder called `example-cluster` with two files in it:
-
-```yaml
-# app-deployment.yaml
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  name: app-deployment
-spec:
-  replicas: 2
-  selector:
-    name: app-pod
-  template:
-    metadata:
-      labels:
-        name: app-pod
-    spec:
-      containers:
-        - name: app-con
-          image: 'node:5.5.0-slim'
-          env:
-            - name: DEBUG
-              value: '0'
-            - name: DOMAIN
-              value: google.com
-```
-
-```yaml
-# app-svc.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: app-svc
-spec:
-  selector:
-    name: app-pod
-```
+Note: Kubernetes Secret values will need to be base64 encoded before being passed to the template for generation.
 
 ## Running
 
@@ -136,30 +277,23 @@ As long as you have access to our private docker registry, you can use the image
 
 This will show you the help information for the deploymentizer command. If you would like to pass in some files to be parsed and have the generated output saved, you can use volumes. The syntax for this would be:
 
-1. `docker run --rm -v <ABSOLUTE_PATH_FOR_GENERATED_FILES>:/generated -v <ABSOLUTE_PATH_TO_CLUSTER_FILES>:/raw kit-deploymentizer --pattern <GLOB_PATTERN_FOR_CLUSTER_FILES>`
-
-The pattern you provide can be in the [glob](https://github.com/isaacs/node-glob) format. It should match ONLY files of `kind: Cluster`.
+1. `docker run --rm -v <ABSOLUTE_PATH_FOR_GENERATED_FILES>:/generated -v <ABSOLUTE_PATH_TO_CLUSTER_FILES>:/manifests kit-deploymentizer --save true`
 
 ## Using as npm module
 
-Use npm to install `kit-deploymentizer`:
-
-```
-$ npm install kit-deploymentizer --save
-```
-
-Then require it and use it like so:
+Add `kit-deploymentizer` to your `package.json` and require it like so:
 
 ```js
 var Deploymentizer = require("kit-deploymentizer").Deploymentizer;
 
 var deploymentizer = new Deploymentizer({
 	save: true,
-	output: "/output"
+	output: "/output",
+  load: "/manifests"
 });
 
 deploymentizer
-	.generate("/manifests/**/*-cluster.yaml")
+	.process()
 	.then(console.log)
 	.catch(console.error)
 	.done();
@@ -179,7 +313,7 @@ The following environment variables are used by this service.
 | `CLEAN` | Set if the output directory should be deleted and re-created before generating manifest files | yes | `false` |
 | `OUTPUT` | Set output directory | no | `/generated` |
 | `SAVE` | Sets if the generated manifest files are saved to the output diretory or not | yes | `true` |
-| `PATTERN` | Set the pattern to search for cluster files | yes | `/manifests/**/*-cluster.yaml` |
+| `LOAD` | Set load directory to read from | yes | `/manifests` |
 
 ## Contributing
 

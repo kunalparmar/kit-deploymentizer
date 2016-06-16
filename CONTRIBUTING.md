@@ -25,7 +25,7 @@ You can use the Codeship [jet](https://codeship.com/documentation/docker/install
 This is an example of building the image locally, and then running it locally using volumes and one of the existing examples in the test directory.
 
 1. `docker build -t kit-deploymentizer .`
-1. `docker run --rm -v $(pwd)/generated:/generated -v $(pwd)/test:/raw kit-deploymentizer --pattern /raw/fixture/simple/**/*-cluster.yaml`
+1. `docker run --rm -v $(pwd)/generated:/generated -v $(pwd)/test/fixture:/manifests kit-deploymentizer --load /manifests`
 
 ## Breaking Changes
 

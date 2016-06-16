@@ -7,6 +7,10 @@
     "url": "git://github.com/InVisionApp/kit-deploymentizer"
   },
   "author": "Chesley Brown <chesley@invisionapp.com>",
+  "contributors": [{
+    "name": "Chuck Freitas",
+    "email": "chuck@invisionapp.com"
+  }],
   "license": "proprietary",
   "bugs": {
     "url": "https://github.com/InVisionApp/kit-deploymentizer/issues"
@@ -22,12 +26,12 @@
   "dependencies": {
     "bluebird": "3.2.2",
     "commander": "2.9.0",
+    "fs-extra": "0.30.0",
     "glob": "6.0.4",
-    "log4js": "0.6.33",
     "js-yaml": "3.5.2",
     "lodash": "4.3.0",
-    "mkdirp": "0.5.1",
-    "rimraf": "2.5.2"
+    "log4js": "0.6.33",
+    "mustache": "2.2.1"
   },
   "devDependencies": {
     "chai": "3.5.0",
