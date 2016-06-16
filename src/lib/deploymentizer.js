@@ -5,6 +5,7 @@ const EventEmitter = require("events");
 const Promise = require("bluebird");
 const Generator = require("./generator");
 const yamlHandler = require("../util/yaml-handler");
+const pluginHandler = require("../util/plugin-handler");
 const fse = require("fs-extra");
 
 const EVENT_TYPE_INFO = "info";
@@ -21,7 +22,8 @@ class Deploymentizer {
 			clean: false,
 			save: false,
 			loadPath: undefined,
-			outputPath: undefined
+			outputPath: undefined,
+      configPlugin: undefined
 		}, options);
 		this.events = new DeploymentizerEmitter();
 	}
@@ -52,13 +54,14 @@ class Deploymentizer {
 			// Load image tag (usage based on Resource Spec or cluster spec)
 			const imageResources = yamlHandler.loadImageDefinitions(`${this.options.loadPath}/images/invision`);
 
+      const configPlugin = new PluginHandler(this.options.configPlugin);
 			// Load the /cluster 'cluster.yaml' and 'configuration-var.yaml'
 			return yamlHandler.loadClusterDefinitions(`${this.options.loadPath}/clusters`)
 				.then( (clusterDefs) => {
 					let promises = [];
 					//Merge the definitions, render templates and save (if enabled)
 					clusterDefs.forEach( (def) => {
-						promises.push( this.processClusterDef( def, typeDefinitions, baseClusterDef, imageResources ) );
+						promises.push( this.processClusterDef( def, typeDefinitions, baseClusterDef, imageResources, configPlugin ) );
 					});
 
 					return Promise.all(promises).then( () => {
@@ -76,7 +79,7 @@ class Deploymentizer {
 	 * @param  {[type]} baseClusterDef  Base Cluster Definition
 	 * @param  {[type]} imageResources  ImageResource Map
 	 */
-	processClusterDef(def, typeDefinitions, baseClusterDef, imageResources) {
+	processClusterDef(def, typeDefinitions, baseClusterDef, imageResources, configPlugin) {
 		return Promise.try( () => {
 			if (def.type()) {
 				const type = typeDefinitions[def.type()];
@@ -92,7 +95,11 @@ class Deploymentizer {
 			// apply the correct image tag based on cluster type or resource type
 			// generating the templates for each resource (if not disabled), using custom ENVs and envs from resource tags.
 			// Save files out
-			const generator = new Generator(def, imageResources, this.options.loadPath, this.options.outputPath, this.options.save);
+			const generator = new Generator(def, imageResources,
+                                      this.options.loadPath,
+                                      this.options.outputPath,
+                                      this.options.save,
+                                      configPlugin);
 			return generator.process();
 		});
 	}

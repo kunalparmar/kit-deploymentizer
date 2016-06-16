@@ -45,14 +45,14 @@ describe("YamlSaving", () => {
 	describe("Save simple JSON object", () => {
 		it("should be successful", (done) => {
 			const content = `
-			kind: ClusterNamespace
-			metadata:
-				name: example-1
-				branch: master
-			resources:
-				auth:
-					branch: develop
-			`;
+        kind: ClusterNamespace
+        metadata:
+          name: example-1
+          branch: master
+        resources:
+          auth:
+            branch: develop
+      `;
 			yamlHandler.saveResourceFile(os.tmpdir(), "example-1", content )
 				.then( () => {
 					return yamlHandler.loadFile(path.join(os.tmpdir(), "example-1.yaml"));

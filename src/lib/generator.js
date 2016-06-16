@@ -34,11 +34,7 @@ function fileInfo(file) {
  */
 class Generator {
 
-	constructor(clusterDef, imageResourceDefs, basePath, exportPath, save) {
-		if (!clusterDef) throw new Error("Valid ClusterDefinition is required");
-		if (!imageResourceDefs) throw new Error("Valid imageResourceDefinitions are required");
-		if (!basePath || basePath.length < 1) throw new Error("Valid BasePath is required");
-		if (!exportPath || exportPath.length < 1) throw new Error("Valid exportPath is required");
+	constructor(clusterDef, imageResourceDefs, basePath, exportPath, save, configPlugin) {
 		this.options = {
 			clusterDef: clusterDef,
 			imageResourceDefs: imageResourceDefs,
@@ -46,6 +42,7 @@ class Generator {
 			exportPath: path.join(exportPath, clusterDef.name()),
 			save: (save || false)
 		};
+    this.configPlugin = configPlugin;
 	}
 
 	/**
@@ -97,30 +94,40 @@ class Generator {
 	 * @return {{}}              cloned copy of the configuration with resource specific attributes added.
 	 */
 	_createLocalConfiguration(config, resourceName, resource) {
-		const branch = (resource.branch || this.options.clusterDef.branch());
-		let localConfig = _.cloneDeep(config);
-		// Add the ResourceName to the config object.
-		localConfig.name = resourceName;
-		// Check to see if the specific resource has its own envs and merge if needed.
-		if (resource.env) {
-			// Process any external ENV values before merging.
-			const env = resourceHandler.mergeEnvs(localConfig.env, resourceHandler.loadExternalEnv( resource.env ));
-			logger.info(`Envs: ${JSON.stringify(env)}`);
-			localConfig.env = env;
-			logger.info(`Local Config with Envs: ${JSON.stringify(localConfig)}`);
-		}
+    const _self = this;
+		return Promise.coroutine( function* () {
+      // get the branch to use
+  		const branch = (resource.branch || _self.options.clusterDef.branch());
+  		let localConfig = _.cloneDeep(config);
+  		// Add the ResourceName to the config object.
+  		localConfig.name = resourceName;
 
-		// Find the image tag name (may be different than resource name)
-		let imageTag = ( resource.image_tag || resourceName);
-		if ( !this.options.imageResourceDefs[imageTag] || !this.options.imageResourceDefs[imageTag][branch] ) {
-			throw new Error(`Image ${imageTag} not for for defined branch ${branch}`);
-		}
-		localConfig.image = this.options.imageResourceDefs[imageTag][branch].image;
-		// if service info, append
-		if (resource.svc) {
-			localConfig.svc = resource.svc;
-		}
-		return localConfig;
+      console.log("Before Plugin Result: %j and options: %j", localConfig, _self.options);
+      // get Configuration from plugin
+      const envConfig = yield _self.configPlugin.fetch( resourceName, _self.options.clusterDef.type(), _self.options.clusterDef.name() );
+      console.log("Plugin Result: %j", envConfig);
+      // merge these in
+      localConfig.env = resourceHandler.mergeEnvs(localConfig.env, envConfig);
+
+  		// Check to see if the specific resource has its own envs and merge if needed.
+  		if (resource.env) {
+  			// Process any external ENV values before merging.
+  			const env = resourceHandler.mergeEnvs(localConfig.env, resourceHandler.loadExternalEnv( resource.env ));
+  			localConfig.env = env;
+  		}
+
+  		// Find the image tag name (may be different than resource name)
+  		let imageTag = ( resource.image_tag || resourceName);
+  		if ( !_self.options.imageResourceDefs[imageTag] || !_self.options.imageResourceDefs[imageTag][branch] ) {
+  			throw new Error(`Image ${imageTag} not for for defined branch ${branch}`);
+  		}
+  		localConfig.image = _self.options.imageResourceDefs[imageTag][branch].image;
+  		// if service info, append
+  		if (resource.svc) {
+  			localConfig.svc = resource.svc;
+  		}
+  		return localConfig;
+    })();
 	}
 
 	/**
@@ -131,15 +138,16 @@ class Generator {
 	 * @return {[type]}           [description]
 	 */
 	processResource(resource, resourceName, fileStats) {
+    const _self = this;
 		return Promise.coroutine( function* () {
 			// Create local config for each resource, includes local envs, svc info and image tag
-			let localConfig = this._createLocalConfiguration(this.options.clusterDef.configuration(), resourceName, resource);
+			let localConfig = _self._createLocalConfiguration(_self.options.clusterDef.configuration(), resourceName, resource);
 			yield this.processService(resource, localConfig);
 
 			logger.info(`Processing Resource ${fileStats.base}`);
 			let resourceTemplate = fse.readFileSync( path.join(this.options.basePath, resource.file), "utf8");
 			const resourceYaml = resourceHandler.render(resourceTemplate, _localConfig);
-			if (this.options.save === true) {
+			if (_self.options.save === true) {
 				yield yamlHandler.saveResourceFile(this.options.exportPath, fileStats.name, resourceYaml);
 			} else {
 				logger.info(`Saving is disabled, skipping ${fileStats.name}`);
