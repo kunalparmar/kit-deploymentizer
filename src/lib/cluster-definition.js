@@ -57,15 +57,15 @@ class ClusterDefinition {
 
 	/**
 	 * get specific resource for cluster
-	 * @param  {[type]} resourceName name of resource
-	 * @return {[type]}
+	 * @param  {string} resourceName name of resource
+	 * @return {Resource}
 	 */
 	resource(resourceName) {
 		return this.cluster.resources[resourceName];
 	}
 	/**
 	 * Configuration information for cluster
-	 * @return {} ResourceConfig object
+	 * @return {ResourceConfig} ResourceConfig object
 	 */
 	configuration() {
 		return this.rsConfig;

@@ -46,28 +46,21 @@ class Deploymentizer {
 			const baseClusterDef = yield yamlHandler.loadBaseDefinitions(this.options.loadPath);
 			this.events.emit(EVENT_TYPE_INFO, "Loaded base cluster definition");
 
-			// TODO: Convert to Promise
 			// Load the type configs into their own Map
-			const typeDefinitions = yamlHandler.loadTypeDefinitions();
+			const typeDefinitions = yield yamlHandler.loadTypeDefinitions(`${this.options.loadPath}/type/*-var.yaml`);
 
-			// TODO: Convert to Promise
 			// Load image tag (usage based on Resource Spec or cluster spec)
-			const imageResources = yamlHandler.loadImageDefinitions(`${this.options.loadPath}/images/invision`);
+			const imageResources = yield yamlHandler.loadImageDefinitions(`${this.options.loadPath}/images/invision`);
 
       const configPlugin = new PluginHandler(this.options.configPlugin);
 			// Load the /cluster 'cluster.yaml' and 'configuration-var.yaml'
-			return yamlHandler.loadClusterDefinitions(`${this.options.loadPath}/clusters`)
-				.then( (clusterDefs) => {
-					let promises = [];
-					//Merge the definitions, render templates and save (if enabled)
-					clusterDefs.forEach( (def) => {
-						promises.push( this.processClusterDef( def, typeDefinitions, baseClusterDef, imageResources, configPlugin ) );
-					});
+			const clusterDefs = yield yamlHandler.loadClusterDefinitions(`${this.options.loadPath}/clusters`)
 
-					return Promise.all(promises).then( () => {
-						this.events.emit(EVENT_TYPE_INFO, `Finished processing files...` );
-					});
-				});
+			//Merge the definitions, render templates and save (if enabled)
+  		for (let i=0; i < clusterDefs.length; i++) {
+        yield this.processClusterDef( def, typeDefinitions, baseClusterDef, imageResources, configPlugin )
+  		};
+			this.events.emit(EVENT_TYPE_INFO, `Finished processing files...` );
 		});
 	}
 

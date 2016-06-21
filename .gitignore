@@ -8,6 +8,9 @@ codeship-dockercfg
 # IDE files
 .idea
 
+# VSCode files
+.vscode
+
 # Dependency directories
 node_modules
 
