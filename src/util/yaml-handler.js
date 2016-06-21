@@ -36,36 +36,44 @@ class YamlHandler {
 	 *   ...
 	 * }
 	 * @param  {[type]} basePath [description]
-	 * @return {{}}      complex object accessable by resource.type.image
+	 * @return {{}}     complex object accessable by resource.type.image as Promise
 	 */
 	static loadImageDefinitions(basePath) {
-		const dirs = fse.readdirSync(basePath);
-		let imageResourceDefs = {};
-		dirs.forEach( (dir) => {
-			let resourceImages = {};
-			const files = glob.sync(path.join(basePath, dir, "*.yaml"));
-			files.forEach( (f) => {
-				const name = path.parse(f).name;
-				const image = YamlHandler.loadFileSync(f);
-				resourceImages[name] = image;
-			});
-			imageResourceDefs[dir] = resourceImages;
-		});
-		return imageResourceDefs;
+		return Promise.coroutine(function* () {
+  		const dirs = fse.readdirSync(basePath);
+  		let imageResourceDefs = {};
+      for (let d=0; d < dirs.length; d++ ) {
+        // loop through the directories
+        const imageResourceName = dirs[d];
+  			let resourceImages = {};
+  			const files = glob.sync(path.join(basePath, imageResourceName, "*.yaml"));
+        // loop through the files adding by name
+        for (let f=0; f<files.length; f++) {
+  				const name = path.parse(files[f]).name;
+  				const image = yield YamlHandler.loadFile(files[f]);
+  				resourceImages[name] = image;
+        }
+  			imageResourceDefs[imageResourceName] = resourceImages;
+      }
+  		return imageResourceDefs;
+    })();
 	}
 
 	/**
 	 * Loads the various Type definitions into an Associative Array.
-	 * @return {{type:definition}} Type Definitions
+	 * @param  {[type]} loadPathPattern path/pattern to load type definitions from, uses glob pattern
+	 * @return {{type:definition}} Type Definitions as a Promise result
 	 */
-	static loadTypeDefinitions() {
-		let files = glob.sync("*/type/*-var.yaml");
-		let typeDefs = {};
-		files.forEach((file) => {
-			let def = YamlHandler.loadFileSync(file);
-			typeDefs[def.metadata.type] = def;
-		});
-		return typeDefs;
+	static loadTypeDefinitions(loadPathPattern) {
+		return Promise.coroutine(function* () {
+  		const files = glob.sync(loadPathPattern);
+  		let typeDefs = {};
+  		for (let i=0; i < files.length; i++) {
+  			const def = yield YamlHandler.loadFile(files[i]);
+  			typeDefs[def.metadata.type] = def;
+  		};
+  		return typeDefs;
+    })();
 	}
 
 	/**
@@ -97,13 +105,14 @@ class YamlHandler {
 					logger.info(`Found Cluster Dir: ${dir}`);
 					// If there is not cluster file present, skip directory
 					if ( fse.existsSync(path.join(basePath, dir, "cluster.yaml")) ) {
-						let p = Promise.join(YamlHandler.loadFile(path.join(basePath, dir, "cluster.yaml")),
-																YamlHandler.loadFile(path.join(basePath, dir, "configuration-var.yaml")),
-																function( cluster, config) {
-																	return new ClusterDefinition( cluster, config );
-																}).then( (clusterDef) => {
-																	clusters.push(clusterDef);
-																});
+						let p = Promise.join(
+              YamlHandler.loadFile(path.join(basePath, dir, "cluster.yaml")),
+							YamlHandler.loadFile(path.join(basePath, dir, "configuration-var.yaml")),
+							function( cluster, config) {
+								return new ClusterDefinition( cluster, config );
+							}).then( (clusterDef) => {
+								clusters.push(clusterDef);
+							});
 						promises.push(p);
 					} else {
 						logger.warn(`No Cluster file found for ${dir}, skipping...`);
