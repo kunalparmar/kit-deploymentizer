@@ -5,7 +5,7 @@ const EventEmitter = require("events");
 const Promise = require("bluebird");
 const Generator = require("./generator");
 const yamlHandler = require("../util/yaml-handler");
-const pluginHandler = require("../util/plugin-handler");
+const PluginHandler = require("../util/plugin-handler");
 const fse = require("fs-extra");
 
 const EVENT_TYPE_INFO = "info";
@@ -58,10 +58,10 @@ class Deploymentizer {
 
 			//Merge the definitions, render templates and save (if enabled)
   		for (let i=0; i < clusterDefs.length; i++) {
-        yield this.processClusterDef( def, typeDefinitions, baseClusterDef, imageResources, configPlugin )
+        yield this.processClusterDef( clusterDefs[i], typeDefinitions, baseClusterDef, imageResources, configPlugin )
   		};
 			this.events.emit(EVENT_TYPE_INFO, `Finished processing files...` );
-		});
+		}).bind(this)();
 	}
 
 	/**

@@ -1,0 +1,48 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{{name}}}-deployment
+  annotations:
+    kit-deployer/dependency-selector: 'tier=backend'
+  labels:
+    app: invisionapp
+    tier: frontend
+    tech: nodejs
+    release: stable
+spec:
+  template:
+    spec:
+      containers:
+        - name: {{{name}}}-con
+          imagePullPolicy: {{{deployment.imagePullPolicy}}}
+          image: {{{image}}}
+          ports:
+            - containerPort: {{{deployment.containerPort}}}
+          livenessProbe:
+            httpGet:
+              path: {{{deployment.livenessProbe.path}}}
+              port: {{deployment.livenessProbe.port}}
+            initialDelaySeconds: {{deployment.livenessProbe.initialDelaySeconds}}
+            timeoutSeconds: {{deployment.livenessProbe.timeoutSeconds}}
+          env:
+          {{#env}}
+            - name: {{{name}}}
+              value: {{{value}}}
+          {{/env}}
+      imagePullSecrets:
+      {{#imagePullSecrets}}
+        - name: {{{secret}}}
+      {{/imagePullSecrets}}
+    metadata:
+      labels:
+        name: auth-pod
+        app: invisionapp
+  replicas: {{{deployment.replicaCount}}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{{deployment.rollingUpdate.maxUnavailable}}}
+      maxSurge: {{{deployment.rollingUpdate.maxSurge}}}
+  selector:
+    matchLabels:
+      name: {{{name}}}-pod

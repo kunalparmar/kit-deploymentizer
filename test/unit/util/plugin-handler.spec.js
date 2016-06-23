@@ -20,7 +20,6 @@ describe("PluginHandler", () =>  {
 				const handler = new PluginHandler("../../../src/plugin/file-config");
 				expect(handler).to.exist;
 				const config = yield handler.fetch( "service", "environment", "example" )
-				console.log(` Configuration: ${JSON.stringify(config)}`);
 				expect(config).to.exist;
 				expect(config).to.include({name: "ENV_ONE", value: "value one"})
 				expect(config).to.include({name: "ENV_TWO", value: "value two"})
@@ -31,14 +30,14 @@ describe("PluginHandler", () =>  {
 			});
 		});
 
-		it("should fail with file not found", (done) => {
+		it("should not fail even with file not found", (done) => {
 			Promise.coroutine(function* () {
 				const handler = new PluginHandler("../../../src/plugin/file-config");
 				expect(handler).to.exist;
 				const config = yield handler.fetch( "service", "environment", "not-here" )
-				done(new Error("Should have failed"));
-			})().catch( (err) => {
 				done();
+			})().catch( (err) => {
+				done(err);
 			});
 		});
 

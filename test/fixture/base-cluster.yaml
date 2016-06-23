@@ -5,7 +5,9 @@ metadata:
 resources:
   auth:
     branch: develop
-    file: ./some/path
+    kind: deployment
+    file: ./resources/auth/auth-deployment.mustache
+    image_tag: node-auth
     svc:
       name: auth-svc
       labels:
@@ -15,16 +17,24 @@ resources:
       - name: test
         value: testbase
   activity:
-    file: ./some/path
+    kind: deployment
+    file: ./resources/activity/activity-deployment.mustache
+    image_tag: node-activity
+    svc:
+      name: activity-svc
+      labels:
+        - name: "app"
+          value: "invisionapp"
 
   envsecret:
-    file: ./some/path
+    kind: secret
+    file: ./resources/secrets/example-secret.mustache
     env:
-      - name: AWS_USER
-        encode: "base64"
+      - name: SECRET_USERNAME
+        encoding: "base64"
         external: true
-      - name: AWS_PASSWORD
-        encode: "base64"
+      - name: SECRET_PASSWORD
+        encoding: "base64"
         external: true
       - name: GITHUB_TOKEN
         external: true

@@ -2,5 +2,5 @@
 #
 kind: ResourceConfig
 metadata:
-  type: testing
+  type: test
 env:
