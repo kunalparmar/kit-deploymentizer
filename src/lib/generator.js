@@ -81,7 +81,6 @@ class Generator {
 			}
 		});
 		return Promise.all(promises).then( (results) => {
-			console.log("%j", results);
 			return;
 		});
 	}
@@ -94,18 +93,15 @@ class Generator {
 	 * @return {{}}              cloned copy of the configuration with resource specific attributes added.
 	 */
 	_createLocalConfiguration(config, resourceName, resource) {
-    const _self = this;
 		return Promise.coroutine( function* () {
       // get the branch to use
-  		const branch = (resource.branch || _self.options.clusterDef.branch());
+  		const branch = (resource.branch || this.options.clusterDef.branch());
   		let localConfig = _.cloneDeep(config);
   		// Add the ResourceName to the config object.
   		localConfig.name = resourceName;
 
-      console.log("Before Plugin Result: %j and options: %j", localConfig, _self.options);
       // get Configuration from plugin
-      const envConfig = yield _self.configPlugin.fetch( resourceName, _self.options.clusterDef.type(), _self.options.clusterDef.name() );
-      console.log("Plugin Result: %j", envConfig);
+      const envConfig = yield this.configPlugin.fetch( resourceName, this.options.clusterDef.type(), this.options.clusterDef.name() );
       // merge these in
       localConfig.env = resourceHandler.mergeEnvs(localConfig.env, envConfig);
 
@@ -116,18 +112,21 @@ class Generator {
   			localConfig.env = env;
   		}
 
-  		// Find the image tag name (may be different than resource name)
-  		let imageTag = ( resource.image_tag || resourceName);
-  		if ( !_self.options.imageResourceDefs[imageTag] || !_self.options.imageResourceDefs[imageTag][branch] ) {
-  			throw new Error(`Image ${imageTag} not for for defined branch ${branch}`);
-  		}
-  		localConfig.image = _self.options.imageResourceDefs[imageTag][branch].image;
+  		// Find the image tag name, if not defined skip
+  		if (resource.image_tag) {
+    		if ( !this.options.imageResourceDefs[resource.image_tag] || !this.options.imageResourceDefs[resource.image_tag][branch] ) {
+    			throw new Error(`Image ${resource.image_tag} not for for defined branch ${branch}`);
+    		}
+    		localConfig.image = this.options.imageResourceDefs[resource.image_tag][branch].image;
+      } else {
+        logger.warn(`No image tag found for ${resourceName}`);
+      }
   		// if service info, append
   		if (resource.svc) {
   			localConfig.svc = resource.svc;
   		}
   		return localConfig;
-    })();
+    }).bind(this)();
 	}
 
 	/**
@@ -138,22 +137,21 @@ class Generator {
 	 * @return {[type]}           [description]
 	 */
 	processResource(resource, resourceName, fileStats) {
-    const _self = this;
 		return Promise.coroutine( function* () {
 			// Create local config for each resource, includes local envs, svc info and image tag
-			let localConfig = _self._createLocalConfiguration(_self.options.clusterDef.configuration(), resourceName, resource);
+			let localConfig = yield this._createLocalConfiguration(this.options.clusterDef.configuration(), resourceName, resource);
 			yield this.processService(resource, localConfig);
 
 			logger.info(`Processing Resource ${fileStats.base}`);
 			let resourceTemplate = fse.readFileSync( path.join(this.options.basePath, resource.file), "utf8");
-			const resourceYaml = resourceHandler.render(resourceTemplate, _localConfig);
-			if (_self.options.save === true) {
+			const resourceYaml = resourceHandler.render(resourceTemplate, localConfig);
+			if (this.options.save === true) {
 				yield yamlHandler.saveResourceFile(this.options.exportPath, fileStats.name, resourceYaml);
 			} else {
 				logger.info(`Saving is disabled, skipping ${fileStats.name}`);
 				return;
 			}
-		})();
+		}).bind(this)();
 	}
 
 	/**
@@ -184,7 +182,7 @@ class Generator {
 		return Promise.try( () => {
 			// There may not be a service associated with this
 			if (! resource.svc) return;
-			logger.info(`Processing Service ${resource.svc.name}`);
+			logger.info(`Processing Service ${resource.svc.name} `);
 			const serviceTemplate = fse.readFileSync(path.join(this.options.basePath, "resources", "base-svc.mustache"), "utf8");
 			const svcYaml = resourceHandler.render(serviceTemplate, config);
 			if (this.options.save === true) {

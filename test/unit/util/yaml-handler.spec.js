@@ -72,7 +72,7 @@ describe("Loading Resources", () => {
 	describe("Loading images", () => {
 		it("should be successful", (done) => {
 			Promise.coroutine(function* () {
-  			const imageResources = yield yamlHandler.loadImageDefinitions("./test/fixture/images");
+  			const imageResources = yield yamlHandler.loadImageDefinitions("./test/fixture/images/invision");
   			expect(imageResources).to.exist;
   			expect(imageResources["node-auth"]).to.exist;
   			expect(imageResources["node-auth"].develop).to.exist;
@@ -93,7 +93,7 @@ describe("Loading Resources", () => {
   			expect(typeDefs).to.exist;
   			expect(typeDefs["develop"]).to.exist;
   			expect(typeDefs["production"]).to.exist;
-  			expect(typeDefs["testing"]).to.exist;
+  			expect(typeDefs["test"]).to.exist;
 
   			expect(typeDefs["develop"].env).to.exist;
   			expect(typeDefs["develop"].env.length).to.equal(1);

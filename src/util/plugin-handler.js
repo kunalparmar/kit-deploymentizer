@@ -1,15 +1,21 @@
 "use strict";
 
 const Promise = require("bluebird");
+const logger = require("log4js").getLogger();
 
 /**
  * Wraps the supplied plugin.
  */
 class PluginHandler {
 
-	constructor(pluginPath) {
+  /**
+   * Load the plugin defined
+   * @param  {[type]} pluginPath [description]
+   * @return {[type]}            [description]
+   */
+  constructor(pluginPath) {
 		this.configService = require(pluginPath);
-	}
+  }
 
 	/**
 	 * Invoke the defined Configuration Service returning the result.
@@ -45,7 +51,10 @@ class PluginHandler {
 					} );
 				});
 				return result;
-			});
+			}).catch( (err) => {
+        logger.warn(`No configuration found for ${serviceName} in ${environment} for cluster ${cluster}`);
+        return {};
+      });
 	}
 }
 

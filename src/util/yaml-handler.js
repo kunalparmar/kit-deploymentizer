@@ -50,6 +50,7 @@ class YamlHandler {
         // loop through the files adding by name
         for (let f=0; f<files.length; f++) {
   				const name = path.parse(files[f]).name;
+          logger.info(`Loading Image: ${name}`)
   				const image = yield YamlHandler.loadFile(files[f]);
   				resourceImages[name] = image;
         }
@@ -69,6 +70,7 @@ class YamlHandler {
   		const files = glob.sync(loadPathPattern);
   		let typeDefs = {};
   		for (let i=0; i < files.length; i++) {
+        logger.info(`Loading typedef: ${files[i]}`)
   			const def = yield YamlHandler.loadFile(files[i]);
   			typeDefs[def.metadata.type] = def;
   		};
@@ -85,7 +87,6 @@ class YamlHandler {
 			const cluster = yield YamlHandler.loadFile(path.join(loadPath, "base-cluster.yaml"));
 			const config = yield YamlHandler.loadFile(path.join(loadPath, "base-var.yaml"));
 			const cDef = new ClusterDefinition(cluster, config);
-			console.log("Base CD %j", cDef);
 			return cDef;
 		})();
 	}

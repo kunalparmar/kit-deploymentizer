@@ -80,7 +80,7 @@ describe("Cluster Definitions", () =>  {
 	describe("Successfully load cluter definition from file", () => {
 		it("should have load values", (done) => {
 			return Promise.coroutine(function* () {
-				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture");
+				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture/clusters");
 				expect(clusterDefs).to.exist;
 				expect(clusterDefs.length).to.equal(1);
 				const clusterDef = clusterDefs[0];
@@ -98,7 +98,7 @@ describe("Cluster Definitions", () =>  {
 
 		it("should load cluster definition and display merged content, keeping initial values", (done) => {
 			return Promise.coroutine(function* () {
-				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture");
+				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture/clusters");
 				expect(clusterDefs).to.exist;
 				expect(clusterDefs.length).to.equal(1);
 
@@ -112,7 +112,6 @@ describe("Cluster Definitions", () =>  {
 
 				// Load the base definitions
 				const baseDef = yield yamlHandler.loadBaseDefinitions("./test/fixture");
-				console.log("###############################");
 				expect(baseDef).to.exist;
 				const authBase = baseDef.resource("auth");
 				expect(authBase).to.exist;

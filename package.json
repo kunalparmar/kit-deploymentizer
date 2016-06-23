@@ -23,6 +23,7 @@
   "scripts": {
     "test-unit": "mocha --recursive test/unit",
     "test-functional": "mocha --recursive test/functional",
+    "test": "mocha --recursive test",
     "lint": "eslint src test"
   },
   "dependencies": {
