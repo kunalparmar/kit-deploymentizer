@@ -269,6 +269,10 @@ The `deploymentizer` will need to support generating a kubernetes secret file in
 
 Note: Kubernetes Secret values will need to be base64 encoded before being passed to the template for generation.
 
+#### Support for Service only
+
+You can create a service without an associated `deployment` resource by creating a separate `*-svc.mustache` file as the resource and not including the default `resource.svc` section. 
+
 ## Running
 
 As long as you have access to our private docker registry, you can use the image as follows:
