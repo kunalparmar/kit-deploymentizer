@@ -9,27 +9,37 @@ var path = require("path");
 var yaml = require("js-yaml");
 
 function save(dir, cluster) {
-	var promises = [];
+	return new Promise((resolve, reject) => {
+		// Try to make directory if it doesn't exist yet
+		fs.mkdir(dir, (err) => {
+			if (err && err.code !== "EEXIST") {
+				return reject(err);
+			}
 
-	// Try to make directory if it doesn't exist yet
-	if (!fs.existsSync(dir)) {
-		fs.mkdirSync(dir);
-	}
+			var promises = [];
 
-	// Group by cluster directory
-	var clusterDir = path.join(dir, cluster.metadata.name);
-	if (!fs.existsSync(clusterDir)) {
-		fs.mkdirSync(clusterDir);
-	}
+			// Group by cluster directory
+			var clusterDir = path.join(dir, cluster.metadata.name);
+			fs.mkdir(clusterDir, (clusterDirErr) => {
+				if (clusterDirErr && clusterDirErr.code !== "EEXIST") {
+					return reject(clusterDirErr);
+				}
 
-	_.each(cluster.spec, function(obj) {
-		var file = path.join(clusterDir, obj.metadata.name + ".yaml");
-		var content = yaml.safeDump(obj);
-		promises.push(writeFileAsync(file, content, "utf8").then(function() {
-			logger.info("Created '" + file + "'");
-		}));
+				_.each(cluster.spec, function(obj) {
+					var file = path.join(clusterDir, obj.metadata.name + ".yaml");
+					var content = yaml.safeDump(obj);
+					promises.push(writeFileAsync(file, content, "utf8").then(function() {
+						logger.info("Created '" + file + "'");
+					}));
+				});
+
+				Promise
+					.all(promises)
+					.then(resolve)
+					.catch(reject);
+			});
+		});
 	});
-	return Promise.all(promises);
 }
 
 module.exports = save;
