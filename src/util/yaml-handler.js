@@ -4,27 +4,28 @@ const fse = require("fs-extra");
 const Promise = require("bluebird");
 const path = require("path");
 const yaml = require("js-yaml");
-const glob = require("glob");
+const glob = require("glob-promise");
 const ClusterDefinition = require("../lib/cluster-definition");
-const logger = require("log4js").getLogger();
+const eventHandler = require("./event-handler");
 const fseWriteFile = Promise.promisify(fse.writeFile);
 const fseReadFile = Promise.promisify(fse.readFile);
 const fseReadDir = Promise.promisify(fse.readdir);
+const fseStat = Promise.promisify(fse.stat);
 
 // Static class for handling Files.
 class YamlHandler {
 
-	// Sync loads a yaml file into a JSOn Object, returning the new Object.
-	static loadFileSync(file) {
-		// Parse the yaml file to JSON
-		return yaml.safeLoad(fse.readFileSync(file, "utf8"));
-	}
-
+  /**
+   * loads a yaml file into a JSOn Object, returning the new Object.
+   * @param  {[type]} file to load
+   * @return {{}}     the yaml file as JSON object
+   */
 	static loadFile(file) {
 		// Parse the yaml file to JSON,
 		return fseReadFile(file, "utf8").then( (fileContent) => {
 			return yaml.safeLoad(fileContent);
 		});
+
 	}
 
 	/**
@@ -40,17 +41,17 @@ class YamlHandler {
 	 */
 	static loadImageDefinitions(basePath) {
 		return Promise.coroutine(function* () {
-  		const dirs = fse.readdirSync(basePath);
+  		const dirs = yield fseReadDir(basePath);
   		let imageResourceDefs = {};
       for (let d=0; d < dirs.length; d++ ) {
         // loop through the directories
         const imageResourceName = dirs[d];
   			let resourceImages = {};
-  			const files = glob.sync(path.join(basePath, imageResourceName, "*.yaml"));
+  		  const files = yield glob(path.join(basePath, imageResourceName, "*.yaml"));
         // loop through the files adding by name
         for (let f=0; f<files.length; f++) {
   				const name = path.parse(files[f]).name;
-          logger.info(`Loading Image: ${name}`)
+          eventHandler.emitInfo(`Loading Image: ${name}`)
   				const image = yield YamlHandler.loadFile(files[f]);
   				resourceImages[name] = image;
         }
@@ -67,10 +68,10 @@ class YamlHandler {
 	 */
 	static loadTypeDefinitions(loadPathPattern) {
 		return Promise.coroutine(function* () {
-  		const files = glob.sync(loadPathPattern);
+  		const files = yield glob(loadPathPattern);
   		let typeDefs = {};
   		for (let i=0; i < files.length; i++) {
-        logger.info(`Loading typedef: ${files[i]}`)
+        eventHandler.emitInfo(`Loading typedef: ${files[i]}`);
   			const def = yield YamlHandler.loadFile(files[i]);
   			typeDefs[def.metadata.type] = def;
   		};
@@ -97,30 +98,24 @@ class YamlHandler {
 	 * @return {[type]}          Returns a Promise with cluster information.
 	 */
 	static loadClusterDefinitions(basePath) {
-		return fseReadDir(basePath)
-			.then( (dirs) => {
-				let clusters = [];
-				let promises = [];
-
-				dirs.forEach( (dir) => {
-					logger.info(`Found Cluster Dir: ${dir}`);
-					// If there is not cluster file present, skip directory
-					if ( fse.existsSync(path.join(basePath, dir, "cluster.yaml")) ) {
-						let p = Promise.join(
-              YamlHandler.loadFile(path.join(basePath, dir, "cluster.yaml")),
-							YamlHandler.loadFile(path.join(basePath, dir, "configuration-var.yaml")),
-							function( cluster, config) {
-								return new ClusterDefinition( cluster, config );
-							}).then( (clusterDef) => {
-								clusters.push(clusterDef);
-							});
-						promises.push(p);
-					} else {
-						logger.warn(`No Cluster file found for ${dir}, skipping...`);
-					}
-				});
-				return Promise.all(promises).then( () => { return clusters; });
-			});
+    return Promise.coroutine(function* () {
+  		const dirs = yield fseReadDir(basePath);
+			let clusters = [];
+      for (let i=0; i<dirs.length; i++) {
+        let dir = dirs[i];
+				eventHandler.emitInfo(`Found Cluster Dir: ${dir}`);
+				// If there is not cluster file present, skip directory
+        const exists = yield YamlHandler.exists(path.join(basePath, dir, "cluster.yaml"));
+				if ( exists ) {
+          const cluster = yield YamlHandler.loadFile(path.join(basePath, dir, "cluster.yaml"));
+					const config = yield YamlHandler.loadFile(path.join(basePath, dir, "configuration-var.yaml"));
+					clusters.push( new ClusterDefinition( cluster, config ) );
+				} else {
+					eventHandler.emitWarn(`No Cluster file found for ${dir}, skipping...`);
+				}
+      }
+			return clusters;
+		})();
 	}
 
 	/**
@@ -135,6 +130,16 @@ class YamlHandler {
 		return fseWriteFile(fileName, content);
 	}
 
+  /**
+   * Checks if a file exists
+   * @param  {string} file to check for
+   * @return {boolean}      boolean
+   */
+  static exists( file ) {
+    return fseStat(file)
+      .then( (stat) => { return true } )
+      .catch( (err) => { return false } );
+  }
 }
 
 module.exports = YamlHandler;

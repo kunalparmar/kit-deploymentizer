@@ -1,7 +1,7 @@
 "use strict";
 
 const Promise = require("bluebird");
-const logger = require("log4js").getLogger();
+const eventHandler = require("./event-handler");
 
 /**
  * Wraps the supplied plugin.
@@ -19,6 +19,8 @@ class PluginHandler {
 
 	/**
 	 * Invoke the defined Configuration Service returning the result.
+	 *
+	 * TODO: move conversion to each plugin....
 	 *
 	 * The values returned from the plugin must match either:
 	 * 	{ "ENV_NAME": "ENV_VALUE", "ENV_NAME": "ENV_VALUE", ... },
@@ -52,7 +54,7 @@ class PluginHandler {
 				});
 				return result;
 			}).catch( (err) => {
-        logger.warn(`No configuration found for ${serviceName} in ${environment} for cluster ${cluster}`);
+        eventHandler.emitWarn(`No configuration found for ${serviceName} in ${environment} for cluster ${cluster}`);
         return {};
       });
 	}

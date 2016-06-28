@@ -4,12 +4,14 @@ var logger = require("log4js").getLogger();
 var program = require("commander");
 var packageJson = require("../package.json");
 var Deploymentizer = require("./lib/deploymentizer");
+var eventHandler = require("./util/event-handler");
 var exit = process.exit;
 
 var parseBoolean = function(str) {
 	return (str === "true");
 };
 
+// TODO add config input 'kit.yaml' or these overrides...
 program
 	.version(packageJson.version)
 	.usage("[options]")
@@ -30,13 +32,13 @@ var deploymentizer = new Deploymentizer({
 });
 
 // Enable logging of all events from the deploymentizer
-deploymentizer.events.on("info", function(message) {
+eventHandler.on(eventHandler.INFO, function(message) {
 	logger.info(message);
 });
-deploymentizer.events.on("warn", function(message) {
+eventHandler.on(eventHandler.WARN, function(message) {
 	logger.warn(message);
 });
-deploymentizer.events.on("fatal", function(message) {
+eventHandler.on(eventHandler.FATAL, function(message) {
 	logger.fatal(message);
 });
 

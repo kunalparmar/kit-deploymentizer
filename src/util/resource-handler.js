@@ -3,7 +3,6 @@
 const _ = require("lodash");
 const mustache = require("mustache");
 
-
 /**
  * Contains resource utility methods. Currently supports merging of objects
  * and rendering of templates.

@@ -271,7 +271,7 @@ Note: Kubernetes Secret values will need to be base64 encoded before being passe
 
 #### Support for Service only
 
-You can create a service without an associated `deployment` resource by creating a separate `*-svc.mustache` file as the resource and not including the default `resource.svc` section. 
+You can create a service without an associated `deployment` resource by creating a separate `*-svc.mustache` file as the resource and not including the default `resource.svc` section.
 
 ## Running
 
@@ -322,3 +322,10 @@ The following environment variables are used by this service.
 ## Contributing
 
 See the [Contributing guide](/CONTRIBUTING.md) for steps on how to contribute to this project.
+
+## Todo
+
+- [ ] Allow plugin to define disabled for service.
+- [ ] Remove all sync hotspots
+- [ ] fix hardcoded path, using kit.yaml loader
+- [ ] Refactor plugin, move parsing of result/new format/support other properies

@@ -5,19 +5,23 @@ const path = require("path");
 const Promise = require("bluebird");
 const yamlHandler = require("../util/yaml-handler");
 const resourceHandler = require("../util/resource-handler");
-const logger = require("log4js").getLogger();
+const eventHandler = require("../util/event-handler");
 const fse = require("fs-extra");
 const fseCopy = Promise.promisify(fse.copy);
+const fseMkdirs = Promise.promisify(fse.mkdirs);
+const fseReadFile = Promise.promisify(fse.readFile);
 
 /**
- * Creates the cluster directory if it already does not exist. Sync operation.
+ * Creates the cluster directory if it already does not exist - async operation.
  * @param  {string} path to directory to create
  */
 function createClusterDirectory(clusterPath) {
 	// Try to make directory if it doesn't exist yet
-	if (!fse.existsSync(clusterPath)) {
-		fse.mkdirsSync(clusterPath);
-	}
+	return yamlHandler.exists(clusterPath).then( (exists) => {
+    if (!exists) {
+  		fseMkdirs(clusterPath);
+    }
+  });
 }
 
 /**
@@ -52,37 +56,45 @@ class Generator {
 	 * Returns a Promise fulfilled after saving file(s)
 	 */
 	process() {
-		// Create the output directory if it already does not exist.
-		createClusterDirectory(this.options.exportPath);
-		const resources = this.options.clusterDef.resources();
-		let promises = [];
-
-		Object.keys(resources).forEach( (resourceName) => {
-			let resource = resources[resourceName];
-			if (resource.disable === true) {
-				logger.warn(`Resource ${resourceName} is disabled, skipping...`);
-			} else {
-				// render template
-				if (resource.file) {
-					const fileStats = fileInfo(resource.file);
-					switch (fileStats.ext) {
-						case ".yaml":
-							// YAML files do not need any processing - copy file to output directory
-							promises.push( this.processCopyResource(resource, fileStats) );
-							break;
-						case ".mustache":
-							// process and render template
-							promises.push( this.processResource(resource, resourceName, fileStats) );
-							break;
-						default:
-							throw new Error(`Unknown file type: ${fileStats.ext}`);
-					}
-				}
-			}
-		});
-		return Promise.all(promises).then( (results) => {
-			return;
-		});
+		return Promise.coroutine( function* () {
+      eventHandler.emitInfo(`Calling process for ${this.options.clusterDef.name()}`);
+  		// Create the output directory if it already does not exist.
+		  yield createClusterDirectory(this.options.exportPath);
+  		const resources = this.options.clusterDef.resources();
+  		let promises = [];
+      const keys = Object.keys(resources);
+      for (let i=0; i<keys.length; i++) {
+        const resourceName = keys[i];
+        let resource = resources[resourceName];
+        if (resource.disable === true) {
+          eventHandler.emitWarn(`Resource ${resourceName} is disabled, skipping...`);
+        } else {
+    			eventHandler.emitInfo(`Creating LocalConfig for Resource :: ${resourceName}`);
+    			let localConfig = yield this._createLocalConfiguration(this.options.clusterDef.configuration(), resourceName, resource);
+          if (resource.file) {
+            eventHandler.emitInfo(`Processing Resource ${resourceName}`);
+            const fileStats = fileInfo(resource.file);
+            switch (fileStats.ext) {
+              case ".yaml":
+                // YAML files do not need any processing - copy file to output directory
+                yield this.processCopyResource(resource, fileStats);
+                break;
+              case ".mustache":
+                // process and render template
+                yield this.processResource(resource, localConfig, fileStats);
+                break;
+              default:
+                throw new Error(`Unknown file type: ${fileStats.ext}`);
+            }
+          }
+          if (resource.svc) {
+      			eventHandler.emitInfo(`Processing Service ${resource.svc.name} `);
+      			// Create local config for each resource, includes local envs, svc info and image tag
+      			yield this.processService(resource, localConfig);
+          }
+        }
+      }
+    }).bind(this)();
 	}
 
 	/**
@@ -101,6 +113,7 @@ class Generator {
   		localConfig.name = resourceName;
 
       // get Configuration from plugin
+      // TODO: This will return other non-env values
       const envConfig = yield this.configPlugin.fetch( resourceName, this.options.clusterDef.type(), this.options.clusterDef.name() );
       // merge these in
       localConfig.env = resourceHandler.mergeEnvs(localConfig.env, envConfig);
@@ -119,7 +132,7 @@ class Generator {
     		}
     		localConfig.image = this.options.imageResourceDefs[resource.image_tag][branch].image;
       } else {
-        logger.warn(`No image tag found for ${resourceName}`);
+        eventHandler.emitWarn(`No image tag found for ${resourceName}`);
       }
   		// if service info, append
   		if (resource.svc) {
@@ -130,27 +143,28 @@ class Generator {
 	}
 
 	/**
-	 * Generates a local config and renders the resource file and saves to the output directory.
-	 * @param  {[type]} resource  to process
-	 * @param  {[type]} config    data to use when rendering templat
-	 * @param  {[type]} fileStats file information
+	 * Renders the resource file and saves to the output directory.
+	 * @param  {[type]} resource     to process
+	 * @param  {[type]} localConfig  data to use when rendering templat
+	 * @param  {[type]} fileStats    file information
 	 * @return {[type]}           [description]
 	 */
-	processResource(resource, resourceName, fileStats) {
+	processResource(resource, localConfig, fileStats) {
 		return Promise.coroutine( function* () {
-			// Create local config for each resource, includes local envs, svc info and image tag
-			let localConfig = yield this._createLocalConfiguration(this.options.clusterDef.configuration(), resourceName, resource);
-			yield this.processService(resource, localConfig);
+			eventHandler.emitInfo(`Processing Resource :: ${fileStats.base}`);
+      try {
 
-			logger.info(`Processing Resource ${fileStats.base}`);
-			let resourceTemplate = fse.readFileSync( path.join(this.options.basePath, resource.file), "utf8");
+			const resourceTemplate = yield fseReadFile( path.join(this.options.basePath, resource.file), "utf8");
 			const resourceYaml = resourceHandler.render(resourceTemplate, localConfig);
 			if (this.options.save === true) {
 				yield yamlHandler.saveResourceFile(this.options.exportPath, fileStats.name, resourceYaml);
 			} else {
-				logger.info(`Saving is disabled, skipping ${fileStats.name}`);
-				return;
+				eventHandler.emitInfo(`Saving is disabled, skipping ${fileStats.name}`);
 			}
+    } catch (e) {
+      console.log(e);
+    }
+      return;
 		}).bind(this)();
 	}
 
@@ -161,37 +175,35 @@ class Generator {
 	 * @return {[type]}           [description]
 	 */
 	processCopyResource(resource, fileStats) {
-		return Promise.try( () => {
-			logger.info(`Copying file from ${path.join(this.options.basePath, resource.file)} to ${path.join(this.options.exportPath, fileStats.base)}`);
+		return Promise.coroutine( function* () {
+			eventHandler.emitInfo(`Copying file from ${path.join(this.options.basePath, resource.file)} to ${path.join(this.options.exportPath, fileStats.base)}`);
 			if (this.options.save === true) {
-				return fseCopy(path.join(this.options.basePath, resource.file), path.join(this.options.exportPath, fileStats.base));
+				return yield fseCopy(path.join(this.options.basePath, resource.file), path.join(this.options.exportPath, fileStats.base));
 			} else {
-				logger.info(`Saving is disabled, skipping ${fileStats.name}`);
+				eventHandler.emitInfo(`Saving is disabled, skipping ${fileStats.name}`);
 				return;
 			}
-		});
+		}).bind(this)();
 	}
 
 	/**
-	 *
+	 * Process the Service File
 	 * @param  {[type]} resource    [description]
 	 * @param  {[type]} localConfig [description]
 	 * @return {[type]}             [description]
 	 */
 	processService(resource, config) {
-		return Promise.try( () => {
+		return Promise.coroutine( function* () {
 			// There may not be a service associated with this
-			if (! resource.svc) return;
-			logger.info(`Processing Service ${resource.svc.name} `);
-			const serviceTemplate = fse.readFileSync(path.join(this.options.basePath, "resources", "base-svc.mustache"), "utf8");
+			const serviceTemplate = yield fseReadFile(path.join(this.options.basePath, "resources", "base-svc.mustache"), "utf8");
 			const svcYaml = resourceHandler.render(serviceTemplate, config);
 			if (this.options.save === true) {
-				return yamlHandler.saveResourceFile(this.options.exportPath, resource.svc.name, svcYaml);
+				yield yamlHandler.saveResourceFile(this.options.exportPath, resource.svc.name, svcYaml);
 			} else {
-				logger.info(`Saving is disabled, skipping ${resource.svc.name}`);
-				return;
+				eventHandler.emitInfo(`Saving is disabled, skipping ${resource.svc.name}`);
 			}
-		});
+			return;
+		}).bind(this)();
 	}
 
 }

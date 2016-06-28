@@ -1,17 +1,13 @@
 "use strict";
 
 const _ = require("lodash");
-const EventEmitter = require("events");
 const Promise = require("bluebird");
 const Generator = require("./generator");
 const yamlHandler = require("../util/yaml-handler");
+const eventHandler = require("../util/event-handler");
 const PluginHandler = require("../util/plugin-handler");
 const fse = require("fs-extra");
-
-const EVENT_TYPE_INFO = "info";
-const EVENT_TYPE_WARN = "warn";
-
-class DeploymentizerEmitter extends EventEmitter {}
+const fseRemove = Promise.promisify(fse.remove);
 
 /**
  * Main class used to process deployment files converting templates into deployable manifests.
@@ -25,7 +21,7 @@ class Deploymentizer {
 			outputPath: undefined,
       configPlugin: undefined
 		}, options);
-		this.events = new DeploymentizerEmitter();
+		this.events = eventHandler;
 	}
 
 	/**
@@ -33,23 +29,24 @@ class Deploymentizer {
 	 * are merged before rendering the deployment manifests.
 	 */
 	process() {
-		this.events.emit(EVENT_TYPE_INFO, `Initialization: ${JSON.stringify(this.options)}`);
-
-		if (this.options.clean) {
-			this.events.emit(EVENT_TYPE_INFO, `Cleaning: ${this.options.outputPath}/*`);
-			fse.removeSync(`${this.options.outputPath}/*`);
-		}
-
-		this.events.emit(EVENT_TYPE_INFO, `Processing directory: ${this.options.loadPath}`);
-
 		return Promise.coroutine(function* () {
+  		this.events.emitInfo(`Initialization: ${JSON.stringify(this.options)}`);
+
+  		if (this.options.clean) {
+  			this.events.emitInfo(`Cleaning: ${this.options.outputPath}/*`);
+  			yield fseRemove(`${this.options.outputPath}/*`);
+  		}
+
+  		this.events.emitInfo(`Processing directory: ${this.options.loadPath}`);
+
 			const baseClusterDef = yield yamlHandler.loadBaseDefinitions(this.options.loadPath);
-			this.events.emit(EVENT_TYPE_INFO, "Loaded base cluster definition");
+			this.events.emitInfo("Loaded base cluster definition");
 
 			// Load the type configs into their own Map
 			const typeDefinitions = yield yamlHandler.loadTypeDefinitions(`${this.options.loadPath}/type/*-var.yaml`);
 
-			// Load image tag (usage based on Resource Spec or cluster spec)
+			// Load image tag (usage based on Resource Spec or cluster spec
+			// TODO : Remove hardcoded - load from kit.yaml
 			const imageResources = yield yamlHandler.loadImageDefinitions(`${this.options.loadPath}/images/invision`);
 
       const configPlugin = new PluginHandler(this.options.configPlugin);
@@ -60,7 +57,7 @@ class Deploymentizer {
   		for (let i=0; i < clusterDefs.length; i++) {
         yield this.processClusterDef( clusterDefs[i], typeDefinitions, baseClusterDef, imageResources, configPlugin )
   		};
-			this.events.emit(EVENT_TYPE_INFO, `Finished processing files...` );
+			this.events.emitInfo(`Finished processing files...` );
 		}).bind(this)();
 	}
 
@@ -80,11 +77,11 @@ class Deploymentizer {
 				// Merge the type definition then the base definition
 				def.apply(type);
 			} else {
-				this.events.emit(EVENT_TYPE_WARN, `No Type configured for cluster ${def.name()}, skipping` );
+				this.events.emitWarn(`No Type configured for cluster ${def.name()}, skipping` );
 			}
 			// Merge with the Base Definitions.
 			def.apply(baseClusterDef);
-			this.events.emit(EVENT_TYPE_INFO, "Done Merging Cluster Definitions");
+			this.events.emitInfo("Done Merging Cluster Definitions");
 			// apply the correct image tag based on cluster type or resource type
 			// generating the templates for each resource (if not disabled), using custom ENVs and envs from resource tags.
 			// Save files out

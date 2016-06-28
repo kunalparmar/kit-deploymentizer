@@ -33,7 +33,7 @@ describe("Generator", () => {
 				// manually merge this here
 				clusterDef.configuration().svc = clusterDef.resources().auth.svc;
 				yield generator.processService(clusterDef.resources().auth, clusterDef.configuration() );
-				const svc = yamlHandler.loadFileSync(path.join(os.tmpdir(), clusterDef.name(), "auth-svc.yaml"));
+				const svc = yield yamlHandler.loadFile(path.join(os.tmpdir(), clusterDef.name(), "auth-svc.yaml"));
 				expect(svc.metadata.name).to.equal("auth-svc");
 				expect(svc.metadata.labels.app).to.equal("invisionapp");
 				done();
