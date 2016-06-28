@@ -2,7 +2,7 @@
 
 const Promise = require("bluebird");
 const rp = require("request-promise");
-const logger = require("log4js").getLogger();
+const eventHandler = require("../util/event-handler");
 
 // assumes complete URL except service, and env param
 const URL = process.env.ENV_API_HOST;
@@ -37,15 +37,13 @@ class EnvApiClient {
       },
       json: true
     };
-    console.log("Request :: %j", options);
   	return rp(options)
       .then( (envs) => {
-        console.log('Returned %j values', envs);
         return envs;
       })
       .catch(function (err) {
         // API call failed...
-        logger.fatal(`Unable to fetch ENVs ${JSON.stringify(err)}`);
+        eventHandler.emitFatal(`Unable to fetch ENVs ${JSON.stringify(err)}`);
         throw err;
       });
 

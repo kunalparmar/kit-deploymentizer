@@ -30,6 +30,12 @@ describe("Deploymentizer", () => {
         // generate the files from our test fixtures
         yield deployer.process();
         // load them back in and validate values
+			  const authSvc = yield yamlHandler.loadFile(path.join(os.tmpdir(), "generated", "test-fixture", "auth-svc.yaml"));
+        expect(authSvc).to.exist;
+        expect(authSvc.metadata.name).to.equal("auth-svc");
+        expect(authSvc.metadata.labels.app).to.exist;
+        expect(authSvc.metadata.labels.app).to.equal("invisionapp");
+
 			  const auth = yield yamlHandler.loadFile(path.join(os.tmpdir(), "generated", "test-fixture", "auth-deployment.yaml"));
         expect(auth).to.exist;
         expect(auth.metadata.name).to.equal("auth-deployment");
@@ -50,12 +56,6 @@ describe("Deploymentizer", () => {
         expect(auth.spec.template.spec.containers[0].env.length).to.equal(4);
         expect(auth.spec.template.spec.containers[0].env).to.include({"name": "ENV_TWO", "value": "value two"});
         expect(auth.spec.template.spec.containers[0].env).to.include({"name": "test", "value": "testvalue"});
-
-			  const authSvc = yield yamlHandler.loadFile(path.join(os.tmpdir(), "generated", "test-fixture", "auth-svc.yaml"));
-        expect(authSvc).to.exist;
-        expect(authSvc.metadata.name).to.equal("auth-svc");
-        expect(authSvc.metadata.labels.app).to.exist;
-        expect(authSvc.metadata.labels.app).to.equal("invisionapp");
 
         // This is "disabled" and should not be generated
         expect(fse.existsSync(path.join(os.tmpdir(), "generated", "test-fixture", "activity-deployment.yaml"))).to.equal(false);
