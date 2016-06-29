@@ -14,9 +14,12 @@ describe("File Configuration plugin", () =>  {
 			Promise.coroutine(function* () {
 				const config = yield fileConfig.fetch( "service", "environment", "example" )
 				expect(config).to.exist;
-				expect(config.ENV_ONE).to.equal("value one");
-				expect(config.ENV_TWO).to.equal("value two");
-				expect(config.ENV_THREE).to.equal("value three");
+				expect(config.branch).to.exist;
+				expect(config.branch).to.equal("develop");
+				expect(config.env).to.exist;
+				expect(config.env).to.include({ "name": "ENV_ONE", "value": "value one"});
+				expect(config.env).to.include({ "name": "ENV_TWO", "value": "value two"});
+				expect(config.env).to.include({ "name": "ENV_THREE", "value": "value three"});
 				done();
 			})().catch( (err) => {
 				done(err);

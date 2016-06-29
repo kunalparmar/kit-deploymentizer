@@ -1,5 +1,8 @@
 {
-  "ENV_ONE": "value one",
-  "ENV_TWO": "value two",
-  "ENV_THREE": "value three"
+  "env": [
+    { "name": "ENV_ONE", "value": "value one"},
+    { "name": "ENV_TWO", "value": "value two"},
+    { "name": "ENV_THREE", "value": "value three"}
+  ],
+  "branch": "develop"
 }
