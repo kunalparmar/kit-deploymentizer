@@ -7,6 +7,7 @@ const Promise = require("bluebird");
 const readFilePromise = Promise.promisify(fse.readFile);
 
 class FileConfig {
+  
 /**
  * Example path for loading env configuration files:
  *   /auth/production/cluster-env.yaml
@@ -19,8 +20,7 @@ class FileConfig {
  * @return {[type]}             [description]
  */
 	static fetch( serviceName, environment, cluster ) {
-
-		return Promise.try( () => {
+    return Promise.coroutine(function* () {
 			if (!process.env.CONFIGURATION_PATH) {
 				throw new Error("CONFIGURATION_PATH must be set");
 			}
@@ -29,12 +29,10 @@ class FileConfig {
 			}
 
 			let file = path.join( process.env.CONFIGURATION_PATH, serviceName, environment, `${cluster}-env.json` );
-
-			return readFilePromise(file, "utf8").then( (data) => {
-				return JSON.parse( data );
-			});
-		});
-
+			const data = yield readFilePromise(file, "utf8");
+      let config = JSON.parse( data );
+      return config;
+    })();
 	}
 }
 

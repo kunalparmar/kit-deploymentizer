@@ -10,12 +10,13 @@ const path = require("path");
 
 const configStub = {
   fetch: function() {
-    return  Promise.resolve([
-      { name: "ENV_ONE",   value: "value-one" },
-      { name: "ENV_TWO",   value: "value-two" },
-      { name: "ENV_THREE", value: "value-three" },
-      { name: "ENV_FOUR",  value: "value-four" },
-    ]);
+    return  Promise.resolve({
+        env: [
+        { name: "ENV_ONE",   value: "value-one" },
+        { name: "ENV_TWO",   value: "value-two" },
+        { name: "ENV_THREE", value: "value-three" },
+        { name: "ENV_FOUR",  value: "value-four" } ]
+    });
   }
 }
 

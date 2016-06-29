@@ -20,16 +20,13 @@ class PluginHandler {
 	/**
 	 * Invoke the defined Configuration Service returning the result.
 	 *
-	 * TODO: move conversion to each plugin....
-	 *
-	 * The values returned from the plugin must match either:
-	 * 	{ "ENV_NAME": "ENV_VALUE", "ENV_NAME": "ENV_VALUE", ... },
-	 * 	  or
-	 * 	[ {name: "ENV_NAME", value: "ENV_VALUE"},{name: "ENV_NAME", value: "ENV_VALUE"}, ...]
+	 * The Object returned from the plugin must match :
+	 *  {
+	 * 	 env: [ {name: "ENV_NAME", value: "ENV_VALUE"},{name: "ENV_NAME", value: "ENV_VALUE"}, ...],
+	 * 	 branch: "BRANCH-NAME",
+	 * 	 ...
+	 *  }
 	 * other formats can be added later.
-	 *
-	 * Returned values are converted to the style of:
-	 * [ {name: "ENV_NAME", value: "ENV_VALUE"},{name: "ENV_NAME", value: "ENV_VALUE"}, ...]
 	 *
 	 * @param  {[type]} serviceName to get env values for
 	 * @param  {[type]} environment that the service will run in
@@ -38,23 +35,10 @@ class PluginHandler {
 	 */
 	fetch( serviceName, environment, cluster ) {
 		// Convert to a Bluebird Promise since we dont know what type we will get back.
-		return Promise.resolve(this.configService.fetch( serviceName, environment, cluster ))
-			.then( (config) => {
-				if (Array.isArray(config)) {
-					// TODO: validate format
-					return config;
-				}
-				// convert to correct format
-				let result = [];
-				Object.keys(config).forEach( (key) => {
-					result.push( {
-						name: key,
-						value: config[key]
-					} );
-				});
-				return result;
-			}).catch( (err) => {
-        eventHandler.emitWarn(`No configuration found for ${serviceName} in ${environment} for cluster ${cluster}`);
+		return Promise.resolve(
+        this.configService.fetch( serviceName, environment, cluster )
+      ).catch( (err) => {
+        eventHandler.emitWarn(`Configuration could not be loaded for ${serviceName} in ${environment} for cluster ${cluster}`);
         return {};
       });
 	}

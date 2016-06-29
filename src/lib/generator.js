@@ -106,9 +106,10 @@ class Generator {
 	 */
 	_createLocalConfiguration(config, resourceName, resource) {
 		return Promise.coroutine( function* () {
-      // get the branch to use
-  		const branch = (resource.branch || this.options.clusterDef.branch());
+      // clone local copy
   		let localConfig = _.cloneDeep(config);
+      // if not not set at the resource level set it to the cluster default
+  		localConfig.branch = (resource.branch || this.options.clusterDef.branch());
   		// Add the ResourceName to the config object.
   		localConfig.name = resourceName;
 
@@ -116,7 +117,10 @@ class Generator {
       // TODO: This will return other non-env values
       const envConfig = yield this.configPlugin.fetch( resourceName, this.options.clusterDef.type(), this.options.clusterDef.name() );
       // merge these in
-      localConfig.env = resourceHandler.mergeEnvs(localConfig.env, envConfig);
+      eventHandler.emitInfo(`LocalConfig before plugin merge for ${resourceName} :: ${JSON.stringify(localConfig)}`);
+      eventHandler.emitInfo(`envConfig from plugin for ${resourceName} :: ${JSON.stringify(envConfig)}`);
+      localConfig = resourceHandler.merge(localConfig, envConfig);
+      eventHandler.emitInfo(`LocalConfig after plugin merge for ${resourceName} :: ${JSON.stringify(localConfig)}`);
 
   		// Check to see if the specific resource has its own envs and merge if needed.
   		if (resource.env) {
@@ -127,10 +131,10 @@ class Generator {
 
   		// Find the image tag name, if not defined skip
   		if (resource.image_tag) {
-    		if ( !this.options.imageResourceDefs[resource.image_tag] || !this.options.imageResourceDefs[resource.image_tag][branch] ) {
-    			throw new Error(`Image ${resource.image_tag} not for for defined branch ${branch}`);
+    		if ( !this.options.imageResourceDefs[resource.image_tag] || !this.options.imageResourceDefs[resource.image_tag][localConfig.branch] ) {
+    			throw new Error(`Image ${resource.image_tag} not for for defined branch ${localConfig.branch}`);
     		}
-    		localConfig.image = this.options.imageResourceDefs[resource.image_tag][branch].image;
+    		localConfig.image = this.options.imageResourceDefs[resource.image_tag][localConfig.branch].image;
       } else {
         eventHandler.emitWarn(`No image tag found for ${resourceName}`);
       }
@@ -138,6 +142,7 @@ class Generator {
   		if (resource.svc) {
   			localConfig.svc = resource.svc;
   		}
+      eventHandler.emitInfo(`Local Config for ${resourceName} :: ${JSON.stringify(localConfig)}`);
   		return localConfig;
     }).bind(this)();
 	}

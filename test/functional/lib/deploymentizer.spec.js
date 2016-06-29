@@ -50,6 +50,7 @@ describe("Deploymentizer", () => {
         expect(auth.spec.template.spec.containers[0].name).to.equal("auth-con");
         expect(auth.spec.template.spec.containers[0].imagePullPolicy).to.equal("IfNotPresent");
         expect(auth.spec.template.spec.containers[0].image).to.exist;
+        expect(auth.spec.template.spec.containers[0].image).to.contain("master");
         expect(auth.spec.template.spec.containers[0].livenessProbe).to.exist;
         expect(auth.spec.template.spec.containers[0].livenessProbe.initialDelaySeconds).to.equal(30);
         expect(auth.spec.template.spec.containers[0].livenessProbe.timeoutSeconds).to.equal(3);
