@@ -204,7 +204,7 @@ resources:
 ```
 You can override individual resource values here, including which branch a resource should be deployed from, deployment specific values, and ENVs that are only for this `cluster.resource`. ENVs can be both externally defined (at build time) or predefinded here.
 
-*External ENVs* are environment variables that are only available at build time. This allows the `deploymentizer` to generate a manifest using env values that may be to sensitive to commit to SourceControl. For example create a kubernetes secret from a template with the values injected at build time.
+*External ENVs* are environment variables that are only available at build time. This allows the `deploymentizer` to generate a manifest using env values that may be too sensitive to commit to SourceControl. For example create a kubernetes secret from a template with the values injected at build time.
 
 The name of the external ENV must match the defined name in the `resource.[RESOURCE-NAME].env.name` definition.
 
