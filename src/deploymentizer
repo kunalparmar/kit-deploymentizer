@@ -23,17 +23,17 @@ program
 	.option("-k, --conf <conf>", "Sets the configure file to load at start up", process.env.CONF)
 	.option("-o, --output <output>", "Set output directory to write files to, overrides value from conf file", process.env.OUTPUT)
 	.option("-l, --load <load>", "Set load directory to read from, overrides value from conf file", process.env.LOAD)
-  .option("-p --plugin <plugin>", "Sets the Confguration plugin to use, overrides value from conf file", process.env.PLUGIN)
+	.option("-p --plugin <plugin>", "Sets the Confguration plugin to use, overrides value from conf file", process.env.PLUGIN)
 	.parse(process.argv)
 ;
 
 var deploymentizer = new Deploymentizer({
 	clean: program.clean,
 	save: program.save,
-  conf: program.conf,
+	conf: program.conf,
 	outputPath: program.output,
 	loadPath: program.load,
-  configPlugin: program.plugin
+	configPlugin: program.plugin
 });
 
 // Enable logging of all events from the deploymentizer
