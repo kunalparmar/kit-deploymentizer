@@ -26,6 +26,7 @@ An example directory layout would look like:
 
 ```sh
 ./manifests
+  kit.yaml
   base-cluster.yaml
   base-var.yaml
   ./clusters
@@ -59,6 +60,28 @@ An example directory layout would look like:
 ### Key Files and types
 
 This section describe the files used by the `deploymentizer` to render the cluster manifest files. These files are expected to exist in the `LOAD` directory passed in at startup.
+
+##### kit.yaml
+This is a small (optional) configuration file. If found, or specified from command line, it can be used to set the paths for the various files.
+Default `kit.yaml` looks like:
+```
+version: '2'
+load:
+  path: "[PATH-TO-DIRECTORY]"
+  images:
+    path: ./manifests/images
+    property: image
+  type:
+    path: ./type
+  cluster:
+    path: ./clusters
+  resources:
+    path: ./resources
+output:
+  path: /generated
+plugin:
+  path: ./src/plugin/env-api
+```
 
 ##### base-cluster.yaml
 
@@ -262,6 +285,7 @@ From the command line, include the path to the envConfig to use: --env-config = 
 
 This will be required at system startup and executed _asynchronously_ for every Resource listed in the cluster definition.
 
+Any values returned from the Plugin are merged into the configuration before the template is rendered.
 
 #### Support for Secrets
 
@@ -271,7 +295,7 @@ Note: Kubernetes Secret values will need to be base64 encoded before being passe
 
 #### Support for Service only
 
-You can create a service without an associated `deployment` resource by creating a separate `*-svc.mustache` file as the resource and not including the default `resource.svc` section.
+You can create a service without an associated `deployment` resource. Include the .svc at the resource level and do not include a resource.file value.
 
 ## Running
 
@@ -317,7 +341,9 @@ The following environment variables are used by this service.
 | `CLEAN` | Set if the output directory should be deleted and re-created before generating manifest files | yes | `false` |
 | `OUTPUT` | Set output directory | no | `/generated` |
 | `SAVE` | Sets if the generated manifest files are saved to the output diretory or not | yes | `true` |
-| `LOAD` | Set load directory to read from | yes | `/manifests` |
+| `LOAD` | Set load directory to read from | one of LOAD or CONF | `/manifests` |
+| `CONF` | sets the path the config file to load | one of LOAD or CONF | `/manifests/kit.yaml` |
+| `PLUGIN` | sets the path to envPlugin  | not | `./src/plugin/env-api` |
 
 ## Contributing
 
@@ -325,7 +351,9 @@ See the [Contributing guide](/CONTRIBUTING.md) for steps on how to contribute to
 
 ## Todo
 
-- [ ] Allow plugin to define disabled for service.
-- [ ] Remove all sync hotspots
-- [ ] fix hardcoded path, using kit.yaml loader
-- [ ] Refactor plugin, move parsing of result/new format/support other properies
+- [x] Allow plugin to define disabled for service.
+- [x] Use event-handler for logging
+- [x] Remove all sync hotspots
+- [x] fix hardcoded path, using kit.yaml loader
+- [x] Refactor plugin, move parsing of result/new format/support other properties
+- [ ] Allow kit.yaml to specify file names.

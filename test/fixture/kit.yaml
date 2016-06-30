@@ -1,0 +1,16 @@
+version: '2'
+load:
+  path: /test/fixtures
+  images:
+    path: ./manifests/images
+    property: image
+  type:
+    path: ./type
+  cluster:
+    path: ./clusters
+  resources:
+    path: ./resources
+output:
+  path: /generated
+plugin:
+  path: ./src/plugin/env-api
