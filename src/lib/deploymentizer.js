@@ -16,86 +16,86 @@ class DeploymentizerEmitter extends EventEmitter {}
  * Main class used to process deployment files converting templates into deployable manifests.
  */
 class Deploymentizer {
-  constructor(options) {
-    this.options = _.merge({
-      clean: false,
-      save: false,
-      loadPath: undefined,
-      outputPath: undefined
-    }, options);
-    this.events = new DeploymentizerEmitter();
-  }
+	constructor(options) {
+		this.options = _.merge({
+			clean: false,
+			save: false,
+			loadPath: undefined,
+			outputPath: undefined
+		}, options);
+		this.events = new DeploymentizerEmitter();
+	}
 
-  /**
-   * Main entrypoint. Handles loading var files and cluster definitions. These
-   * are merged before rendering the deployment manifests.
-   */
-  process() {
-    this.events.emit(EVENT_TYPE_INFO, `Initialization: ${JSON.stringify(this.options)}`);
+	/**
+	 * Main entrypoint. Handles loading var files and cluster definitions. These
+	 * are merged before rendering the deployment manifests.
+	 */
+	process() {
+		this.events.emit(EVENT_TYPE_INFO, `Initialization: ${JSON.stringify(this.options)}`);
 
-    if (this.options.clean) {
-      this.events.emit(EVENT_TYPE_INFO, `Cleaning: ${this.options.outputPath}/*`);
-      fse.removeSync(`${this.options.outputPath}/*`);
-    }
+		if (this.options.clean) {
+			this.events.emit(EVENT_TYPE_INFO, `Cleaning: ${this.options.outputPath}/*`);
+			fse.removeSync(`${this.options.outputPath}/*`);
+		}
 
-    this.events.emit(EVENT_TYPE_INFO, `Processing directory: ${this.options.loadPath}`);
+		this.events.emit(EVENT_TYPE_INFO, `Processing directory: ${this.options.loadPath}`);
 
-    return Promise.coroutine(function* () {
-      const baseClusterDef = yield yamlHandler.loadBaseDefinitions(this.options.loadPath);
-      this.events.emit(EVENT_TYPE_INFO, "Loaded base cluster definition");
+		return Promise.coroutine(function* () {
+			const baseClusterDef = yield yamlHandler.loadBaseDefinitions(this.options.loadPath);
+			this.events.emit(EVENT_TYPE_INFO, "Loaded base cluster definition");
 
-      // TODO: Convert to Promise
-      // Load the type configs into their own Map
-      const typeDefinitions = yamlHandler.loadTypeDefinitions();
+			// TODO: Convert to Promise
+			// Load the type configs into their own Map
+			const typeDefinitions = yamlHandler.loadTypeDefinitions();
 
-      // TODO: Convert to Promise
-      // Load image tag (usage based on Resource Spec or cluster spec)
-      const imageResources = yamlHandler.loadImageDefinitions(`${this.options.loadPath}/images/invision`);
+			// TODO: Convert to Promise
+			// Load image tag (usage based on Resource Spec or cluster spec)
+			const imageResources = yamlHandler.loadImageDefinitions(`${this.options.loadPath}/images/invision`);
 
-      // Load the /cluster 'cluster.yaml' and 'configuration-var.yaml'
-      return yamlHandler.loadClusterDefinitions(`${this.options.loadPath}/clusters`)
-        .then( (clusterDefs) => {
-          let promises = [];
-          //Merge the definitions, render templates and save (if enabled)
-          clusterDefs.forEach( (def) => {
-            promises.push( this.processClusterDef( def, typeDefinitions, baseClusterDef, imageResources ) );
-          });
+			// Load the /cluster 'cluster.yaml' and 'configuration-var.yaml'
+			return yamlHandler.loadClusterDefinitions(`${this.options.loadPath}/clusters`)
+				.then( (clusterDefs) => {
+					let promises = [];
+					//Merge the definitions, render templates and save (if enabled)
+					clusterDefs.forEach( (def) => {
+						promises.push( this.processClusterDef( def, typeDefinitions, baseClusterDef, imageResources ) );
+					});
 
-          return Promise.all(promises).then( () => {
-            this.events.emit(EVENT_TYPE_INFO, `Finished processing files...` );
-          });
-        });
-    });
-  }
+					return Promise.all(promises).then( () => {
+						this.events.emit(EVENT_TYPE_INFO, `Finished processing files...` );
+					});
+				});
+		});
+	}
 
-  /**
-   * Process files for a given cluster. This includes merging configuration files, and rendering templates.
-   *
-   * @param  {[type]} def             Cluster Definition
-   * @param  {[type]} typeDefinitions Map of Type configuration
-   * @param  {[type]} baseClusterDef  Base Cluster Definition
-   * @param  {[type]} imageResources  ImageResource Map
-   */
-  processClusterDef(def, typeDefinitions, baseClusterDef, imageResources) {
-    return Promise.try( () => {
-      if (def.type()) {
-        const type = typeDefinitions[def.type()];
-        if (!type) { throw new Error(`UnSupported Type ${def.type()}`); }
-        // Merge the type definition then the base definition
-        def.apply(type);
-      } else {
-        this.events.emit(EVENT_TYPE_WARN, `No Type configured for cluster ${def.name()}, skipping` );
-      }
-      // Merge with the Base Definitions.
-      def.apply(baseClusterDef);
-      this.events.emit(EVENT_TYPE_INFO, "Done Merging Cluster Definitions");
-      // apply the correct image tag based on cluster type or resource type
-      // generating the templates for each resource (if not disabled), using custom ENVs and envs from resource tags.
-      // Save files out
-      const generator = new Generator(def, imageResources, this.options.loadPath, this.options.outputPath, this.options.save);
-      return generator.process();
-    });
-  }
+	/**
+	 * Process files for a given cluster. This includes merging configuration files, and rendering templates.
+	 *
+	 * @param  {[type]} def             Cluster Definition
+	 * @param  {[type]} typeDefinitions Map of Type configuration
+	 * @param  {[type]} baseClusterDef  Base Cluster Definition
+	 * @param  {[type]} imageResources  ImageResource Map
+	 */
+	processClusterDef(def, typeDefinitions, baseClusterDef, imageResources) {
+		return Promise.try( () => {
+			if (def.type()) {
+				const type = typeDefinitions[def.type()];
+				if (!type) { throw new Error(`UnSupported Type ${def.type()}`); }
+				// Merge the type definition then the base definition
+				def.apply(type);
+			} else {
+				this.events.emit(EVENT_TYPE_WARN, `No Type configured for cluster ${def.name()}, skipping` );
+			}
+			// Merge with the Base Definitions.
+			def.apply(baseClusterDef);
+			this.events.emit(EVENT_TYPE_INFO, "Done Merging Cluster Definitions");
+			// apply the correct image tag based on cluster type or resource type
+			// generating the templates for each resource (if not disabled), using custom ENVs and envs from resource tags.
+			// Save files out
+			const generator = new Generator(def, imageResources, this.options.loadPath, this.options.outputPath, this.options.save);
+			return generator.process();
+		});
+	}
 }
 
 module.exports = Deploymentizer;
