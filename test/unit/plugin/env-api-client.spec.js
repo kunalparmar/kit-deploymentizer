@@ -8,7 +8,8 @@ describe("ENV API Client Configuration plugin", () =>  {
 	describe("Load Client", () =>  {
 		it("should fail with validation error", (done) => {
 			try {
-				const apiConfig = require("../../../src/plugin/env-api-client");
+  			const ApiConfig = require("../../../src/plugin/env-api-client");
+        const apiConfig = new ApiConfig();
 				done(new Error("Should have failed"));
 			} catch(err) {
 				done();
@@ -16,11 +17,12 @@ describe("ENV API Client Configuration plugin", () =>  {
 		});
 
 		it("should load plugin successfully", (done) => {
-			process.env.ENV_API_HOST = "HOST";
-			process.env.ENV_API_TOKEN = "TOKEN";
-			const apiConfig = require("../../../src/plugin/env-api-client");
-			delete process.env.ENV_API_HOST;
-			delete process.env.ENV_API_TOKEN;
+      const options = { api_url: "http://somehost/v1", api_token: "SOME-TOKEN"}
+			const ApiConfig = require("../../../src/plugin/env-api-client");
+      const apiConfig = new ApiConfig(options);
+      expect(apiConfig).to.exist;
+      expect(apiConfig.api_token).to.equal("SOME-TOKEN");
+      expect(apiConfig.api_url).to.equal("http://somehost/v1");
 			done();
 		});
 	});

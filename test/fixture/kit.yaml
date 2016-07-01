@@ -1,6 +1,7 @@
 version: '2'
 load:
   path: /test/fixtures
+  # All paths defined here are relative to the load.path
   images:
     path: ./manifests/images
     property: image
@@ -13,4 +14,12 @@ load:
 output:
   path: /generated
 plugin:
-  path: ./src/plugin/env-api
+  path: /src/plugin/file-config
+  options:
+    configPath: "/test/fixture/config"
+
+#plugin:
+#  path: /src/plugin/env-api
+#  options:
+#    api_url: "http://somehost/v1/api"
+#    api_token: "s0me-t0ken-g0es-here"

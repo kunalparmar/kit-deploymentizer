@@ -4,20 +4,20 @@ var expect = require("chai").expect;
 const Promise = require("bluebird");
 const PluginHandler = require("../../../src/util/plugin-handler");
 
-process.env.CONFIGURATION_PATH = "./test/fixture/config";
-
 describe("PluginHandler", () =>  {
 
 	describe("Load", () =>  {
 
 		it("Should load the pluginHandler", () => {
-			const handler = new PluginHandler("../../../src/plugin/file-config");
+      const options = { configPath: "./test/fixture/config" }
+			const handler = new PluginHandler("../../../src/plugin/file-config", options);
 			expect(handler).to.exist;
 		});
 
 		it("should load configuration object", (done) => {
 			Promise.coroutine(function* () {
-				const handler = new PluginHandler("../../../src/plugin/file-config");
+        const options = { configPath: "./test/fixture/config" }
+  			const handler = new PluginHandler("../../../src/plugin/file-config", options);
 				expect(handler).to.exist;
 				const config = yield handler.fetch( "service", "environment", "example" )
 				expect(config).to.exist;
@@ -36,7 +36,8 @@ describe("PluginHandler", () =>  {
 
 		it("should not fail even with file not found", (done) => {
 			Promise.coroutine(function* () {
-				const handler = new PluginHandler("../../../src/plugin/file-config");
+        const options = { configPath: "./test/fixture/config" }
+  			const handler = new PluginHandler("../../../src/plugin/file-config", options);
 				expect(handler).to.exist;
 				const config = yield handler.fetch( "service", "environment", "not-here" )
 				done();

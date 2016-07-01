@@ -3,11 +3,11 @@
 var expect = require("chai").expect;
 const Promise = require("bluebird");
 
-process.env.CONFIGURATION_PATH = "./test/fixture/config";
-
 describe("File Configuration plugin", () =>  {
 
-	const fileConfig = require("../../../src/plugin/file-config");
+	const FileConfig = require("../../../src/plugin/file-config");
+  const fileConfig = new FileConfig({configPath: "./test/fixture/config"});
+
 	console.log(fileConfig);
 	describe("Load", () =>  {
 		it("should load configuration object", (done) => {

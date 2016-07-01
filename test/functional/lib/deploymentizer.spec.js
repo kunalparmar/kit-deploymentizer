@@ -14,7 +14,6 @@ describe("Deploymentizer", () => {
 		it("should run successfully", (done) => {
 
       Promise.coroutine(function* () {
-        process.env.CONFIGURATION_PATH = "./test/fixture/config";
         process.env.SECRET_USERNAME = "myusername";
         process.env.SECRET_PASSWORD = "mypassword";
         process.env.GITHUB_TOKEN = "s@mpler@ndomt0ken";
@@ -23,8 +22,7 @@ describe("Deploymentizer", () => {
             clean: true,
             save: true,
             loadPath: "./test/fixture",
-            outputPath: path.join(os.tmpdir(), "generated"),
-            configPlugin: "../../../src/plugin/file-config"
+            outputPath: path.join(os.tmpdir(), "generated")
           });
         expect(deployer).to.exist;
         // generate the files from our test fixtures

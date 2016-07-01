@@ -23,7 +23,7 @@ class Deploymentizer {
 				save: false,
 				conf: undefined,
 				version: "2",
-				configPlugin: "./plugin/env-api-client"
+				configPlugin: {path: "./plugin/env-api-client"}
 			}, options);
 		// set defaults
 		this.paths = {
@@ -44,8 +44,8 @@ class Deploymentizer {
 	process() {
 		return Promise.coroutine(function* () {
 
-			this.events.emitInfo(`Initialization: ${JSON.stringify(this.options)}`);
 			yield this.loadConf();
+			this.events.emitInfo(`Initialization: ${JSON.stringify(this.options)}`);
 
 			if (this.options.clean) {
 				this.events.emitInfo(`Cleaning: ${path.join(this.paths.output, "/*")}`);
@@ -63,7 +63,7 @@ class Deploymentizer {
 			// Load image tag (usage based on Resource Spec or cluster spec
 			const imageResources = yield yamlHandler.loadImageDefinitions(path.join(this.paths.base, "/images/invision"));
 
-			const configPlugin = new PluginHandler(this.options.configPlugin);
+			const configPlugin = new PluginHandler(this.options.configPlugin.path, this.options.configPlugin.options);
 			// Load the /cluster 'cluster.yaml' and 'configuration-var.yaml'
 			const clusterDefs = yield yamlHandler.loadClusterDefinitions(path.join(this.paths.base, "/clusters"));
 
@@ -108,8 +108,8 @@ class Deploymentizer {
 				if (conf.output && ! this.paths.output) {
 					this.paths.output = conf.output.path;
 				}
-				if (conf.plugin && !this.options.configPlugin) {
-					this.options.configPlugin = conf.plugin.path;
+				if (conf.plugin) {
+					this.options.configPlugin = conf.plugin;
 				}
 			} else {
 				this.events.emitWarn("No Configuration file found.");

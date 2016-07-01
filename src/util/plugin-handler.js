@@ -13,8 +13,9 @@ class PluginHandler {
    * @param  {[type]} pluginPath [description]
    * @return {[type]}            [description]
    */
-  constructor(pluginPath) {
-		this.configService = require(pluginPath);
+  constructor(pluginPath, options) {
+    const plugin = require(pluginPath)
+		this.configService = new plugin(options);
   }
 
 	/**

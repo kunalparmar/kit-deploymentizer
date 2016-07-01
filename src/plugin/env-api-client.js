@@ -4,47 +4,49 @@ const Promise = require("bluebird");
 const rp = require("request-promise");
 const eventHandler = require("../util/event-handler");
 
-// assumes complete URL except service, and env param
-const URL = process.env.ENV_API_HOST;
-const TOKEN = process.env.ENV_API_TOKEN;
-
-(function() {
-  if (!URL || !TOKEN) {
-    throw new Error("The ENV_API_HOST and ENV_API_TOKEN environment vars are required.");
-  }
-}());
-
+/**
+ * Class for accessing the EnvApi Service.
+ */
 class EnvApiClient {
 
-/**
- *
- * Requires the ENV_API_HOST and ENV_API_TOKEN to be set. Expects JSON results in
- * the format of:
- * {
- *   env: {
- *   		ENV_NAME_ONE: ENV_VALUE_ONE,
- *   		ENV_NAME_TWO: ENV_VALUE_TWO,
- *   		...
- *   },
- *   k8s: {
- *     other: value,
- *     ...
- *   }
- *
- * }
- *
- * @param  {[type]} serviceName [description]
- * @param  {[type]} environment [description]
- * @param  {[type]} cluster     [description]
- * @return {[type]}             [description]
- */
-	static fetch( serviceName, environment, cluster ) {
+  /**
+   * Requires the api_url and api_token to be set included as parameters.
+   * @param  {[type]} options
+   */
+  constructor(options) {
+    if (!options.api_url || !options.api_token) {
+      throw new Error("Both api_token and api_url are required configuration values.")
+    }
+    this.api_url = options.api_url;
+    this.api_token = options.api_token;
+  }
+
+  /**
+   * Expects JSON results in the format of:
+   * {
+   *   env: {
+   *   		ENV_NAME_ONE: ENV_VALUE_ONE,
+   *   		ENV_NAME_TWO: ENV_VALUE_TWO,
+   *   		...
+   *   },
+   *   k8s: {
+   *     other: value,
+   *     ...
+   *   }
+   * }
+   *
+   * @param  {[type]} serviceName to get envs for
+   * @param  {[type]} environment the service is running in
+   * @param  {[type]} cluster     the service is running in
+   * @return {[type]}             envs and configuration information
+   */
+	fetch( serviceName, environment, cluster ) {
     return Promise.coroutine(function* () {
-      const uri = `${URL}/${serviceName}`;
+      const uri = `${this.api_url}/${serviceName}`;
       const options = {
         uri: uri,
         qs: { env: environment },
-        headers: { 'X-Auth-Token': TOKEN },
+        headers: { 'X-Auth-Token': this.api_token },
         json: true
       };
     	let config = yield rp(options);
@@ -67,7 +69,7 @@ class EnvApiClient {
         });
       }
       return result;
-    })().catch(function (err) {
+    }).bind(this)().catch(function (err) {
       // API call failed...
       eventHandler.emitFatal(`Unable to fetch or convert ENV Config ${JSON.stringify(err)}`);
       throw err;

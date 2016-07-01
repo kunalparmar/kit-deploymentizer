@@ -61,8 +61,10 @@ An example directory layout would look like:
 
 This section describe the files used by the `deploymentizer` to render the cluster manifest files. These files are expected to exist in the `LOAD` directory passed in at startup.
 
-##### kit.yaml
-This is a small (optional) configuration file. If found, or specified from command line, it can be used to set the paths for the various files.
+##### configuration default name: kit.yaml
+
+This is a small (optional) configuration file. Deploymentizer looks by default in the root of the `--loadPath` for a `kit.yaml` file. You can specify any file by passing in the --conf flag at startup. This can be used to set the paths for the various files and configure the plugin used for loading env configuration. You can override the `load.path` and `output.path` from command line flags at run time.
+
 Default `kit.yaml` looks like:
 ```
 version: '2'
@@ -236,10 +238,7 @@ The cluster specific configuration file is optional. If defined it would overrid
 # Cluster specific Configuration
 #
 kind: ResourceConfig
-
 ```
-
-
 ### Templates
 
 Current implementation uses the Mustache template engine to render the templates. Documentation for Mustache can be found at [http://mustache.github.io/](http://mustache.github.io/).
@@ -273,15 +272,26 @@ spec: {{{! If Ports are not defined, default to below }}}
 ```
 
 #### Plugin For ENV configuration
-The plugin module should export a single function, accepting the following parameters:
+The plugin module should export a class that will be instantiated passing in any
+parameters defined in the the kit configuration file loaded by the deploymentizer.
+
+The class must contain a function named `fetch`, accepting the parameters `( serviceName, environment, cluster )`. Example usage:
+
 ```
+const envConfig = new EnvConfig(options);
 envConfig.fetch( serviceName, environment, cluster );
 ```
 The `fetch` function must return a Promise. Promises will be converted to bluebird promise via `Promise.resolve(envService.fetch( serviceName, environment, cluster ))`
 
-Any configuration values need by the plugin should be supplied via ENV vars. Calling this with any invalid values (ie wrong service, cluster, env) should return a error.  This will be logged and skipped - not halt processing.
+Any configuration values needed by the plugin should be supplied via the configuration file loaded by the deploymentizer at startup. This should also include the path the plugin to load. Example configuration file for the plugin:
+```
+plugin:
+  path: ./src/plugin/file-config
+  options:
+    configPath: "/test/fixture/config"
+```
 
-From the command line, include the path to the envConfig to use: --env-config = ../PATH-TO-PLUGIN
+Calling this with any invalid values (ie wrong service, cluster, env) should return a error.  This will be logged and skipped - not halt processing.
 
 This will be required at system startup and executed _asynchronously_ for every Resource listed in the cluster definition.
 
@@ -351,9 +361,10 @@ See the [Contributing guide](/CONTRIBUTING.md) for steps on how to contribute to
 
 ## Todo
 
+- [ ] Allow Passing in of Plugin options from the command line
+- [ ] Allow kit.yaml to specify file names.
 - [x] Allow plugin to define disabled for service.
 - [x] Use event-handler for logging
 - [x] Remove all sync hotspots
 - [x] fix hardcoded path, using kit.yaml loader
 - [x] Refactor plugin, move parsing of result/new format/support other properties
-- [ ] Allow kit.yaml to specify file names.
