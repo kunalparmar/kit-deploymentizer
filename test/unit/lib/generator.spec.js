@@ -9,15 +9,15 @@ const fse = require("fs-extra");
 const path = require("path");
 
 const configStub = {
-  fetch: function() {
-    return  Promise.resolve({
-        env: [
-        { name: "ENV_ONE",   value: "value-one" },
-        { name: "ENV_TWO",   value: "value-two" },
-        { name: "ENV_THREE", value: "value-three" },
-        { name: "ENV_FOUR",  value: "value-four" } ]
-    });
-  }
+	fetch: function() {
+		return  Promise.resolve({
+				env: [
+				{ name: "ENV_ONE",   value: "value-one" },
+				{ name: "ENV_TWO",   value: "value-two" },
+				{ name: "ENV_THREE", value: "value-three" },
+				{ name: "ENV_FOUR",  value: "value-four" } ]
+		});
+	}
 }
 
 describe("Generator", () => {
@@ -41,8 +41,8 @@ describe("Generator", () => {
 			})().catch( (err) => {
 				done(err);
 			});
-    });
-  });
+		});
+	});
 
 	describe("Local configuration", () => {
 		it("should create copy of config, merging in values from resource", (done) => {
@@ -56,8 +56,8 @@ describe("Generator", () => {
 				if (!fse.existsSync( path.join(os.tmpdir(), clusterDef.name())) ) {
 					fse.mkdirsSync( path.join(os.tmpdir(), clusterDef.name()) );
 				}
-        // we add the image tag here, since we dont preload the base cluster def in this test
-        clusterDef.resources().auth.image_tag = "node-auth";
+				// we add the image tag here, since we dont preload the base cluster def in this test
+				clusterDef.resources().auth.image_tag = "node-auth";
 				const localConfig = yield generator._createLocalConfiguration(clusterDef.configuration(), "auth", clusterDef.resources().auth);
 				expect(localConfig).to.exist;
 				expect(localConfig.svc).to.exist;
@@ -85,8 +85,8 @@ describe("Generator", () => {
 				if (!fse.existsSync( path.join(os.tmpdir(), clusterDef.name())) ) {
 					fse.mkdirsSync( path.join(os.tmpdir(), clusterDef.name()) );
 				}
-        // we add the image tag here, since we dont preload the base cluster def in this test
-        clusterDef.resources().auth.image_tag = "node-auth";
+				// we add the image tag here, since we dont preload the base cluster def in this test
+				clusterDef.resources().auth.image_tag = "node-auth";
 				const localConfig = yield generator._createLocalConfiguration(clusterDef.configuration(), "auth", clusterDef.resources().auth);
 				expect(localConfig).to.exist;
 				expect(localConfig.svc).to.exist;
