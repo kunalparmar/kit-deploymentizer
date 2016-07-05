@@ -113,14 +113,13 @@ class Generator {
   		// Add the ResourceName to the config object.
   		localConfig.name = resourceName;
 
-      // get Configuration from plugin
-      // TODO: This will return other non-env values
-      const envConfig = yield this.configPlugin.fetch( resourceName, this.options.clusterDef.type(), this.options.clusterDef.name() );
-      // merge these in
-      eventHandler.emitInfo(`LocalConfig before plugin merge for ${resourceName} :: ${JSON.stringify(localConfig)}`);
-      eventHandler.emitInfo(`envConfig from plugin for ${resourceName} :: ${JSON.stringify(envConfig)}`);
-      localConfig = resourceHandler.merge(localConfig, envConfig);
-      eventHandler.emitInfo(`LocalConfig after plugin merge for ${resourceName} :: ${JSON.stringify(localConfig)}`);
+      // If we have a plugin use it to load env and other config values
+      if (this.configPlugin) {
+        // get Configuration from plugin
+        const envConfig = yield this.configPlugin.fetch( resourceName, this.options.clusterDef.type(), this.options.clusterDef.name() );
+        // merge these in
+        localConfig = resourceHandler.merge(localConfig, envConfig);
+      }
 
   		// Check to see if the specific resource has its own envs and merge if needed.
   		if (resource.env) {

@@ -23,7 +23,7 @@ class Deploymentizer {
 				save: false,
 				conf: undefined,
 				version: "2",
-				configPlugin: {path: "./plugin/env-api-client"}
+				configPlugin: undefined
 			}, options);
 		// set defaults
 		this.paths = {
@@ -63,7 +63,10 @@ class Deploymentizer {
 			// Load image tag (usage based on Resource Spec or cluster spec
 			const imageResources = yield yamlHandler.loadImageDefinitions(path.join(this.paths.base, "/images/invision"));
 
-			const configPlugin = new PluginHandler(this.options.configPlugin.path, this.options.configPlugin.options);
+			let configPlugin = undefined;
+			if (this.options.configPlugin) {
+				configPlugin = new PluginHandler(this.options.configPlugin.path, this.options.configPlugin.options);
+			}
 			// Load the /cluster 'cluster.yaml' and 'configuration-var.yaml'
 			const clusterDefs = yield yamlHandler.loadClusterDefinitions(path.join(this.paths.base, "/clusters"));
 
