@@ -21,5 +21,5 @@ plugin:
 #plugin:
 #  path: /src/plugin/env-api
 #  options:
-#    api_url: "http://somehost/v1/api"
-#    api_token: "s0me-t0ken-g0es-here"
+#    apiUrl: "http://somehost/v1/api"
+#    apiToken: "s0me-t0ken-g0es-here"

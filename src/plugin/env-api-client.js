@@ -10,15 +10,15 @@ const eventHandler = require("../util/event-handler");
 class EnvApiClient {
 
   /**
-   * Requires the api_url and api_token to be set included as parameters.
+   * Requires the apiUrl and apiToken to be set included as parameters.
    * @param  {[type]} options
    */
   constructor(options) {
-    if (!options.api_url || !options.api_token) {
-      throw new Error("Both api_token and api_url are required configuration values.")
+    if (!options.apiUrl || !options.apiToken) {
+      throw new Error("Both apiToken and apiUrl are required configuration values.")
     }
-    this.api_url = options.api_url;
-    this.api_token = options.api_token;
+    this.apiUrl = options.apiUrl;
+    this.apiToken = options.apiToken;
   }
 
   /**
@@ -42,11 +42,11 @@ class EnvApiClient {
    */
 	fetch( serviceName, environment, cluster ) {
     return Promise.coroutine(function* () {
-      const uri = `${this.api_url}/${serviceName}`;
+      const uri = `${this.apiUrl}/${serviceName}`;
       const options = {
         uri: uri,
         qs: { env: environment },
-        headers: { 'X-Auth-Token': this.api_token },
+        headers: { 'X-Auth-Token': this.apiToken },
         json: true
       };
     	let config = yield rp(options);
