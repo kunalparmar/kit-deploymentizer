@@ -28,7 +28,7 @@
     type: push
     tag: ^(master|beta-.*)$
     service: app
-    image_tag: "v2-{{ .Branch }}"
+    image_tag: "{{ .Branch }}"
     registry: quay.io
     image_name: quay.io/invision/kit-deploymentizer
 

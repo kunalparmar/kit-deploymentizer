@@ -22,17 +22,16 @@ class Deploymentizer {
 				clean: false,
 				save: false,
 				conf: undefined,
-				version: "2",
-				configPlugin: undefined
+				version: "2"
 			}, options);
 		// set defaults
 		this.paths = {
-			base: options.loadPath,
-			output: options.outputPath,
-			cluster: "./clusters",
-			images: "./images/invision",
-			type: "./type",
-			resources: "./resources"
+			base: undefined,
+			output: undefined,
+			cluster: undefined,
+			images: undefined,
+			type: undefined,
+			resources: undefined
 		}
 		this.events = eventHandler;
 	}
@@ -83,39 +82,28 @@ class Deploymentizer {
 	 */
 	loadConf() {
 		return Promise.coroutine(function* () {
-			// if conf is not passed in, set to default location and try that
-			this.options.conf = (this.options.conf || path.join(this.paths.base, "kit.yaml"));
 			let exists = yield yamlHandler.exists( this.options.conf );
 			if (exists) {
 				const conf = yield yamlHandler.loadFile(this.options.conf);
 				if (conf.version !== this.options.version) {
 					throw new Error(`Unsupported version ${conf.version}, expected ${this.options.version}`);
 				}
-				if (conf.load) {
-					if (conf.load.path && ! this.paths.base) {
-						this.paths.base = conf.load.path;
+				this.paths.base = (conf.base) ? conf.base.path : undefined;
+				this.paths.output = (conf.output) ? conf.output.path : undefined;
+				this.paths.cluster = (conf.cluster) ? conf.cluster.path : undefined;
+				this.paths.resources = (conf.resources) ? conf.resources.path : undefined;
+				this.paths.type = (conf.type) ? conf.type.path : undefined;
+				this.paths.images = (conf.images) ? conf.images.path : undefined;
+				this.options.configPlugin = ( conf.plugin || undefined);
+				console.log("%j",this.paths);
+				Object.keys(this.paths).forEach( (key) => {
+					if (!this.paths[key]) {
+						throw new Error (`Missing required value: ${key}`);
 					}
-					if (conf.load.cluster) {
-						this.paths.cluster = conf.load.cluster.path;
-					}
-					if (conf.load.resources) {
-						this.paths.resources = conf.load.resources.path;
-					}
-					if (conf.load.type) {
-						this.paths.type = conf.load.type.path;
-					}
-					if (conf.load.images) {
-						this.paths.images = conf.load.images.path;
-					}
-				}
-				if (conf.output && ! this.paths.output) {
-					this.paths.output = conf.output.path;
-				}
-				if (conf.plugin) {
-					this.options.configPlugin = conf.plugin;
-				}
+				});
 			} else {
-				this.events.emitWarn("No Configuration file found.");
+				this.events.emitFatal("No Configuration file found.");
+				throw new Error("No Configuration file found");
 			}
 			this.events.emitInfo(`Paths set to: ${JSON.stringify(this.paths)}`);
 		}).bind(this)();

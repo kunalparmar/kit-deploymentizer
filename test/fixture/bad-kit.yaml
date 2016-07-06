@@ -1,17 +1,17 @@
 version: '2'
-base:
-  path: /test/fixture
-images:
-  path: /test/fixture/manifests/images
-  property: image
+# base:
+#   path: /test/fixtures
+# images:
+#   path: /test/fixtures/manifests/images
+  # property: image
 type:
   path: /test/fixture/type
 cluster:
   path: /test/fixture/clusters
 resources:
   path: /test/fixture/resources
-output:
-  path: /generated
+# output:
+#   path: /generated
 plugin:
   path: /src/plugin/file-config
   options:

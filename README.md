@@ -63,7 +63,7 @@ This section describe the files used by the `deploymentizer` to render the clust
 
 ##### configuration default name: kit.yaml
 
-This is a small (optional) configuration file. Deploymentizer looks by default in the root of the `--loadPath` for a `kit.yaml` file. You can specify any file by passing in the --conf flag at startup. This can be used to set the paths for the various files and configure the plugin used for loading env configuration. You can override the `load.path` and `output.path` from command line flags at run time.
+This is a small configuration file used to configure paths and the plugin to be used by Deploymentizer. You can specify the file by passing in the --conf flag at startup. This can be used to set the paths for the various files and configure the plugin used for loading env configuration.
 
 Default `kit.yaml` looks like:
 ```
@@ -349,11 +349,8 @@ The following environment variables are used by this service.
 | Variable | Description | Required | Default |
 | :--- | :--- | :--- | :--- |
 | `CLEAN` | Set if the output directory should be deleted and re-created before generating manifest files | yes | `false` |
-| `OUTPUT` | Set output directory | no | `/generated` |
 | `SAVE` | Sets if the generated manifest files are saved to the output diretory or not | yes | `true` |
-| `LOAD` | Set load directory to read from | one of LOAD or CONF | `/manifests` |
-| `CONF` | sets the path the config file to load | one of LOAD or CONF | `/manifests/kit.yaml` |
-| `PLUGIN` | sets the path to envPlugin  | not | `./src/plugin/env-api` |
+| `CONF` | Sets the path the config file to load | yes | `/manifests/kit.yaml` |
 
 ## Contributing
 

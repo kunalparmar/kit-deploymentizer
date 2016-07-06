@@ -12,28 +12,22 @@ var parseBoolean = function(str) {
 };
 
 /**
- * Most values can be set in the conf file, specify here to override default or values from conf.
- * At least one of --load or --conf flags must be set.
+ * Most values should be set in the conf file, with the exception of --clean and --save
+ * At least --conf flags must be set.
  */
 program
 	.version(packageJson.version)
 	.usage("[options]")
 	.option("-c, --clean <boolean>", "Set if the output directory should be deleted and re-created before generating manifest files", parseBoolean, parseBoolean(process.env.CLEAN))
 	.option("-s, --save <boolean>", "Sets if the generated manifest files are saved to the output diretory or not", parseBoolean, parseBoolean(process.env.SAVE))
-	.option("-k, --conf <conf>", "Sets the configure file to load at start up", process.env.CONF)
-	.option("-o, --output <output>", "Set output directory to write files to, overrides value from conf file", process.env.OUTPUT)
-	.option("-l, --load <load>", "Set load directory to read from, overrides value from conf file", process.env.LOAD)
-	.option("-p --plugin <plugin>", "Sets the Confguration plugin to use, overrides value from conf file", process.env.PLUGIN)
+	.option("-k, --conf <conf>", "Sets the configure file to load at start up - Required.", process.env.CONF)
 	.parse(process.argv)
 ;
 
 var deploymentizer = new Deploymentizer({
 	clean: program.clean,
 	save: program.save,
-	conf: program.conf,
-	outputPath: program.output,
-	loadPath: program.load,
-	configPlugin: program.plugin
+	conf: program.conf
 });
 
 // Enable logging of all events from the deploymentizer

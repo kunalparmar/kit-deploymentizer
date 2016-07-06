@@ -21,8 +21,7 @@ describe("Deploymentizer", () => {
         const deployer = new Deploymentizer ({
             clean: true,
             save: true,
-            loadPath: "./test/fixture",
-            outputPath: path.join(os.tmpdir(), "generated")
+            conf: "/test/fixture/kit.yaml"
           });
         expect(deployer).to.exist;
         // generate the files from our test fixtures
