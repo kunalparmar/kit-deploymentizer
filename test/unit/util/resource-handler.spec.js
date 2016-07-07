@@ -4,6 +4,79 @@ const expect = require("chai").expect;
 const resourceHandler = require("../../../src/util/resource-handler");
 
 describe("resourceHandler", () => {
+	describe("Merginging", () =>  {
+		const base =
+		{
+			"resources": {
+        "coldfusion-secret": {
+            "kind": "secret",
+            "file": "./resources/secrets/coldfusion-secret.yaml"
+        },
+        "auth": {
+            "kind": "deployment",
+            "file": "./resources/auth/auth-deployment.mustache",
+            "image_tag": "node-auth",
+            "svc": {
+                "name": "auth-svc",
+                "labels": [
+                    {
+                        "name": "app",
+                        "value": "invisionapp"
+                    }
+                ]
+            },
+						"env": [
+							{"name": "one", "value": "value-one"},
+							{"name": "two", "value": "value-two"}
+						]
+        }
+			}
+		};
+		const sampleEmptyResources = { "resources": { } };
+		const sampleNullResources = { "resources": null };
+		const sampleResources = { "resources": { "auth": { "disabled": true, "kind": "overwrite"}} };
+		const sampleArray = { "resources": { "auth": { "disabled": true, "kind": "overwrite",
+													"env": [{"name": "two", "value": "value-two-overwrite"}, {"name": "three", "value": "value-three"}] }} };
+		it("Should merge empty resource", () => {
+			const mergedObj = resourceHandler.merge(base, sampleEmptyResources);
+			console.log("Merged Object: %j", mergedObj);
+			expect(mergedObj).to.exist;
+			expect(mergedObj.resources.auth).to.exist;
+			expect(mergedObj.resources.auth.kind).to.equal("deployment");
+		});
+
+		it("Should merge with null resources", () => {
+			const mergedObj = resourceHandler.merge(base, sampleNullResources);
+			console.log("Merged Object: %j", mergedObj);
+			expect(mergedObj).to.exist;
+			expect(mergedObj.resources.auth).to.exist;
+			expect(mergedObj.resources.auth.kind).to.equal("deployment");
+		});
+
+		it("Should merge resources", () => {
+			const mergedObj = resourceHandler.merge(base, sampleResources);
+			console.log("Merged Object: %j", mergedObj);
+			expect(mergedObj).to.exist;
+			expect(mergedObj.resources.auth).to.exist;
+			expect(mergedObj.resources.auth.kind).to.equal("overwrite");
+			expect(mergedObj.resources.auth.disabled).to.exist;
+			expect(mergedObj.resources.auth.disabled).to.equal(true);
+		});
+
+		it("Should merge resources with envs", () => {
+			const mergedObj = resourceHandler.merge(base, sampleArray);
+			console.log("Merged Object: %j", mergedObj);
+			expect(mergedObj).to.exist;
+			expect(mergedObj.resources.auth).to.exist;
+			expect(mergedObj.resources.auth.kind).to.equal("overwrite");
+			expect(mergedObj.resources.auth.disabled).to.exist;
+			expect(mergedObj.resources.auth.env.length).to.equal(3);
+			expect(mergedObj.resources.auth.env).to.include({"name": "three", "value": "value-three"});
+			expect(mergedObj.resources.auth.env).to.include({"name": "two", "value": "value-two-overwrite"});
+		});
+
+	});
+
 	describe("Encoding", () =>  {
 		it("should base64 encode string", () => {
 			const strToEncode = "Encode Me";

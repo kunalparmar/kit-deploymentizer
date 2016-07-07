@@ -141,7 +141,6 @@ class Generator {
   		if (resource.svc) {
   			localConfig.svc = resource.svc;
   		}
-      eventHandler.emitInfo(`Local Config for ${resourceName} :: ${JSON.stringify(localConfig)}`);
   		return localConfig;
     }).bind(this)();
 	}

@@ -46,12 +46,12 @@ class YamlHandler {
       for (let d=0; d < dirs.length; d++ ) {
         // loop through the directories
         const imageResourceName = dirs[d];
+        eventHandler.emitInfo(`Loading Images for ${imageResourceName}`);
   			let resourceImages = {};
   		  const files = yield glob(path.join(basePath, imageResourceName, "*.yaml"));
         // loop through the files adding by name
         for (let f=0; f<files.length; f++) {
   				const name = path.parse(files[f]).name;
-          eventHandler.emitInfo(`Loading Image: ${name}`)
   				const image = yield YamlHandler.loadFile(files[f]);
   				resourceImages[name] = image;
         }
