@@ -63,26 +63,26 @@ This section describe the files used by the `deploymentizer` to render the clust
 
 ##### configuration default name: kit.yaml
 
-This is a small configuration file used to configure paths and the plugin to be used by Deploymentizer. You can specify the file by passing in the --conf flag at startup. This can be used to set the paths for the various files and configure the plugin used for loading env configuration.
+This is a small configuration file used to configure paths and the plugin to be used by Deploymentizer. You can specify the file by passing in the --conf flag at startup. This is used to set the paths for the various files and configure the plugin used for loading env configuration.
 
 Default `kit.yaml` looks like:
 ```
 version: '2'
-load:
+base:
   path: "[PATH-TO-DIRECTORY]"
-  images:
-    path: ./manifests/images
-    property: image
-  type:
-    path: ./type
-  cluster:
-    path: ./clusters
-  resources:
-    path: ./resources
+images:
+  path: /manifests/images
+  property: image
+type:
+  path: ./type
+cluster:
+  path: /manifests/clusters
+resources:
+  path: /manifests/resources
 output:
   path: /generated
 plugin:
-  path: ./src/plugin/env-api
+  path: /src/plugin/env-api
 ```
 
 ##### base-cluster.yaml
@@ -103,7 +103,6 @@ resources:
   # Application Resources
   auth:
     file: ./resources/auth/auth-deployment.mustache
-    image_tag: node-auth
     svc:
       name: auth-svc
       labels:
@@ -113,6 +112,10 @@ resources:
           value: "frontend"
         - name: "role"
           value: "service"
+    containers:
+      auth-con:
+        image_tag: node-auth
+
   activity:
     file: ./resources/activity/activity-deployment.mustache
     image_tag: node-activity
@@ -193,13 +196,15 @@ metadata:
 resources:
   # auth
   auth:
-    branch: develop
-    env:
-      - name: [ENV_NAME]
-        value: [ENV_VALUE]
-      - name: [ENV_NAME]
-        external: true
-        encoding: base64
+    containers:
+      auth-con:
+        branch: develop
+        env:
+          - name: [ENV_NAME]
+            value: [ENV_VALUE]
+          - name: [ENV_NAME]
+            external: true
+            encoding: base64
 
   activity:
     disable: false
@@ -221,15 +226,11 @@ resources:
   ...
   [RESOURCE-NAME]:
     file: [PATH-TO-MUSTACHE-TEMPLATE]
-    image_tag: [IMAGE-RESOURCE-NAME]
     svc:
       name: [SERVICE-NAME]
       labels:
         - name: [KEYS]
           value: [VALUES]
-    env:
-      - [ENV_KEY]: [ENV_VALUE]
-        ...
 ```
 
 The cluster specific configuration file is optional. If defined it would override the configuration defined by the Base/Type files. An example would be:

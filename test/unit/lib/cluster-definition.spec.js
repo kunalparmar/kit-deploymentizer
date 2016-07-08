@@ -115,8 +115,8 @@ describe("Cluster Definitions", () =>  {
 				expect(baseDef).to.exist;
 				const authBase = baseDef.resource("auth");
 				expect(authBase).to.exist;
-				expect(authBase.env.length).to.equal(1);
-				expect(authBase.env).to.include( {name: "test", value: "testbase"} );
+				expect(authBase.containers["auth-con"].env.length).to.equal(1);
+				expect(authBase.containers["auth-con"].env).to.include( {name: "test", value: "testbase"} );
 
 				// Merge content
 				clusterDef.apply(baseDef);
@@ -125,8 +125,8 @@ describe("Cluster Definitions", () =>  {
 				expect(clusterDef.rsConfig.deployment.containerPort).to.equal(80);
 				const authResource = clusterDef.resource("auth");
 				expect(authResource).to.exist;
-				expect(authResource.env.length).to.equal(1);
-				expect(authResource.env).to.include( {name: "test", value: "testvalue"} );
+				expect(authResource.containers["auth-con"].env.length).to.equal(1);
+				expect(authResource.containers["auth-con"].env).to.include( {name: "test", value: "testvalue"} );
 				done()
 			})().catch( (err) => {
 				done(err);

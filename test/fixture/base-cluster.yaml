@@ -7,24 +7,31 @@ resources:
     branch: develop
     kind: deployment
     file: ./resources/auth/auth-deployment.mustache
-    image_tag: node-auth
     svc:
       name: auth-svc
       labels:
         - name: "app"
           value: "invisionapp"
-    env:
-      - name: test
-        value: testbase
+    containers:
+      auth-con:
+        image_tag: node-auth
+        name: auth
+        env:
+          - name: test
+            value: testbase
   activity:
     kind: deployment
     file: ./resources/activity/activity-deployment.mustache
-    image_tag: node-activity
     svc:
       name: activity-svc
       labels:
         - name: "app"
           value: "invisionapp"
+    containers:
+      activity-con:
+        image_tag: node-activity
+        name: activity
+
 
   envsecret:
     kind: secret

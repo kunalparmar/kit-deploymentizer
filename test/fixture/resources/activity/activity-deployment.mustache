@@ -15,7 +15,7 @@ spec:
       containers:
         - name: {{{name}}}-con
           imagePullPolicy: {{{deployment.imagePullPolicy}}}
-          image: {{{image}}}
+          image: {{{activity-con.image}}}
           ports:
             - containerPort: {{{deployment.containerPort}}}
           livenessProbe:
@@ -25,10 +25,10 @@ spec:
             initialDelaySeconds: {{deployment.livenessProbe.initialDelaySeconds}}
             timeoutSeconds: {{deployment.livenessProbe.timeoutSeconds}}
           env:
-          {{#env}}
+          {{#activity-con.env}}
             - name: {{{name}}}
               value: {{{value}}}
-          {{/env}}
+          {{/activity-con.env}}
       imagePullSecrets:
       {{#imagePullSecrets}}
         - name: {{{secret}}}

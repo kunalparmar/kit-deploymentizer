@@ -57,16 +57,16 @@ describe("Generator", () => {
 					fse.mkdirsSync( path.join(os.tmpdir(), clusterDef.name()) );
 				}
 				// we add the image tag here, since we dont preload the base cluster def in this test
-				clusterDef.resources().auth.image_tag = "node-auth";
+				clusterDef.resources().auth.containers["auth-con"].image_tag = "node-auth";
 				const localConfig = yield generator._createLocalConfiguration(clusterDef.configuration(), "auth", clusterDef.resources().auth);
 				expect(localConfig).to.exist;
 				expect(localConfig.svc).to.exist;
 				expect(localConfig).to.not.equal(clusterDef.configuration());
 				expect(localConfig.name).to.equal("auth");
-				expect(localConfig.image).to.equal("SOME-DEVELOP-IMAGE");
-				expect(localConfig.env).to.include({ name: "test", value: "testvalue" });
-				expect(localConfig.env).to.include({ name: "ENV_ONE",   value: "value-one" });
-				expect(localConfig.env).to.include({ name: "ENV_THREE", value: "value-three" });
+				expect(localConfig["auth-con"].image).to.equal("SOME-DEVELOP-IMAGE");
+				expect(localConfig["auth-con"].env).to.include({ name: "test", value: "testvalue" });
+				expect(localConfig["auth-con"].env).to.include({ name: "ENV_ONE",   value: "value-one" });
+				expect(localConfig["auth-con"].env).to.include({ name: "ENV_THREE", value: "value-three" });
 				done();
 			})().catch( (err) => {
 				done(err);
@@ -86,15 +86,15 @@ describe("Generator", () => {
 					fse.mkdirsSync( path.join(os.tmpdir(), clusterDef.name()) );
 				}
 				// we add the image tag here, since we dont preload the base cluster def in this test
-				clusterDef.resources().auth.image_tag = "node-auth";
+				clusterDef.resources().auth.containers["auth-con"].image_tag = "node-auth";
 				const localConfig = yield generator._createLocalConfiguration(clusterDef.configuration(), "auth", clusterDef.resources().auth);
 				expect(localConfig).to.exist;
 				expect(localConfig.svc).to.exist;
 				expect(localConfig).to.not.equal(clusterDef.configuration());
-				expect(localConfig.name).to.equal("auth");
-				expect(localConfig.image).to.equal("SOME-DEVELOP-IMAGE");
-				expect(localConfig.env).to.include({ name: "test", value: "testvalue" });
-				expect(localConfig.env).to.not.include({ name: "ENV_ONE",   value: "value-one" });
+				expect(localConfig["auth-con"].name).to.equal("auth");
+				expect(localConfig["auth-con"].image).to.equal("SOME-DEVELOP-IMAGE");
+				expect(localConfig["auth-con"].env).to.include({ name: "test", value: "testvalue" });
+				expect(localConfig["auth-con"].env).to.not.include({ name: "ENV_ONE",   value: "value-one" });
 				done();
 			})().catch( (err) => {
 				done(err);

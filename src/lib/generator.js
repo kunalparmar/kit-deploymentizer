@@ -99,6 +99,10 @@ class Generator {
 
 	/**
 	 * Creates a local clone of the configuration object for a given resource.
+	 * Resources can contain more than one Container, configuration information is
+	 * mapped to each container in the giver resource. So local config, will
+	 * contain 1-n Container child objects.
+	 *
 	 * @param  {[type]} config       Initial configuration object
 	 * @param  {[type]} resourceName Name of the resource
 	 * @param  {[type]} resource
@@ -113,34 +117,55 @@ class Generator {
   		// Add the ResourceName to the config object.
   		localConfig.name = resourceName;
 
-      // If we have a plugin use it to load env and other config values
-      if (this.configPlugin) {
-        // get Configuration from plugin
-        const envConfig = yield this.configPlugin.fetch( resourceName, this.options.clusterDef.type(), this.options.clusterDef.name() );
-        // merge these in
-        localConfig = resourceHandler.merge(localConfig, envConfig);
-      }
+			// Map all containers into an Array
+			let containers = [];
+			if (resource.containers) {
+				Object.keys(resource.containers).forEach( (cName) => {
+					containers.push({ name: cName, container: resource.containers[cName] });
+				});
+			} else {
+				containers.push({ name: resourceName, container: resource });
+			}
 
-  		// Check to see if the specific resource has its own envs and merge if needed.
-  		if (resource.env) {
-  			// Process any external ENV values before merging.
-  			const env = resourceHandler.mergeEnvs(localConfig.env, resourceHandler.loadExternalEnv( resource.env ));
-  			localConfig.env = env;
-  		}
+			// Process each container
+			for (let i=0; i < containers.length; i++) {
+				let artifact = containers[i].container;
+				let containerName = containers[i].name;
+				// make sure the name is set
+				artifact.name = (artifact.name || resourceName);
+				localConfig[containerName] = artifact;
+				// If we have a plugin use it to load env and other config values
+	      if (this.configPlugin) {
+	        // get Configuration from plugin
+	        const envConfig = yield this.configPlugin.fetch( artifact.name, this.options.clusterDef.type(), this.options.clusterDef.name() );
+	        // merge these in --> At this point, envConfig will overwrite anything in the cluster def.
+	        localConfig[containerName] = resourceHandler.merge(artifact, envConfig);
+	      }
 
-  		// Find the image tag name, if not defined skip
-  		if (resource.image_tag) {
-    		if ( !this.options.imageResourceDefs[resource.image_tag] || !this.options.imageResourceDefs[resource.image_tag][localConfig.branch] ) {
-    			throw new Error(`Image ${resource.image_tag} not for for defined branch ${localConfig.branch}`);
-    		}
-    		localConfig.image = this.options.imageResourceDefs[resource.image_tag][localConfig.branch].image;
-      } else {
-        eventHandler.emitWarn(`No image tag found for ${resourceName}`);
-      }
+	  		// Check to see if the specific resource has its own envs and merge if needed.
+	  		if (artifact.env) {
+	  			// Process any external ENV values before merging.
+	  			const env = resourceHandler.mergeEnvs(localConfig[containerName].env, resourceHandler.loadExternalEnv( artifact.env ));
+	  			localConfig[containerName].env = env;
+	  		}
+
+	  		// Find the image tag name, if not defined skip
+	  		if (artifact.image_tag) {
+					const artifactBranch = (localConfig[containerName].branch || localConfig.branch);
+	    		if ( !this.options.imageResourceDefs[artifact.image_tag] || !this.options.imageResourceDefs[artifact.image_tag][artifactBranch] ) {
+	    			throw new Error(`Image ${artifact.image_tag} not for for defined branch ${artifactBranch}`);
+	    		}
+	    		localConfig[containerName].image = this.options.imageResourceDefs[artifact.image_tag][artifactBranch].image;
+	      } else {
+	        eventHandler.emitWarn(`No image tag found for ${artifact.name}`);
+	      }
+			}
+
   		// if service info, append
   		if (resource.svc) {
   			localConfig.svc = resource.svc;
   		}
+			eventHandler.emitInfo(`Local Configurtion: ${JSON.stringify(localConfig)}`);
   		return localConfig;
     }).bind(this)();
 	}

@@ -15,7 +15,7 @@ spec:
       containers:
         - name: {{{name}}}-con
           imagePullPolicy: {{{deployment.imagePullPolicy}}}
-          image: {{{image}}}
+          image: {{{auth-con.image}}}
           ports:
             - containerPort: {{{deployment.containerPort}}}
           livenessProbe:
@@ -25,10 +25,10 @@ spec:
             initialDelaySeconds: {{deployment.livenessProbe.initialDelaySeconds}}
             timeoutSeconds: {{deployment.livenessProbe.timeoutSeconds}}
           env:
-          {{#env}}
+          {{#auth-con.env}}
             - name: {{{name}}}
               value: {{{value}}}
-          {{/env}}
+          {{/auth-con.env}}
       imagePullSecrets:
       {{#imagePullSecrets}}
         - name: {{{secret}}}
