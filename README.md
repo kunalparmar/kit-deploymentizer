@@ -359,7 +359,8 @@ See the [Contributing guide](/CONTRIBUTING.md) for steps on how to contribute to
 
 ## Todo
 
-- [ ] Allow Passing in of Plugin options from the command line
+- [ ] Allow setting the output file name, not the template name. Allow reuse of individual templates (selectsync/mongoreplica examples)
+- [ ] Allow setting the `svc` template to render
 - [ ] Allow kit.yaml to specify file names.
 - [x] Allow plugin to define disabled for service.
 - [x] Use event-handler for logging

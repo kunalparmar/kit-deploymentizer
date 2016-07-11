@@ -5,7 +5,6 @@ const Promise = require("bluebird");
 const path = require("path");
 const yaml = require("js-yaml");
 const glob = require("glob-promise");
-const _ = require("lodash");
 const ClusterDefinition = require("../lib/cluster-definition");
 const eventHandler = require("./event-handler");
 const fseWriteFile = Promise.promisify(fse.writeFile);
