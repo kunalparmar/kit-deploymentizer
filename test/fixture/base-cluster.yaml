@@ -6,7 +6,7 @@ resources:
   auth:
     branch: develop
     kind: deployment
-    file: ./resources/auth/auth-deployment.mustache
+    file: ./auth/auth-deployment.mustache
     svc:
       name: auth-svc
       labels:
@@ -14,14 +14,14 @@ resources:
           value: "invisionapp"
     containers:
       auth-con:
-        image_tag: node-auth
+        image_tag: invision/node-auth
         name: auth
         env:
           - name: test
             value: testbase
   activity:
     kind: deployment
-    file: ./resources/activity/activity-deployment.mustache
+    file: ./activity/activity-deployment.mustache
     svc:
       name: activity-svc
       labels:
@@ -29,13 +29,13 @@ resources:
           value: "invisionapp"
     containers:
       activity-con:
-        image_tag: node-activity
+        image_tag: invision/node-activity
         name: activity
 
 
   envsecret:
     kind: secret
-    file: ./resources/secrets/example-secret.mustache
+    file: ./secrets/example-secret.mustache
     env:
       - name: SECRET_USERNAME
         encoding: "base64"

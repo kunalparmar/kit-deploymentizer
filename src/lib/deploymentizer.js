@@ -51,23 +51,21 @@ class Deploymentizer {
 				yield fseRemove(path.join(this.paths.output, "/*"));
 			}
 
-			this.events.emitInfo(`Processing directory: ${this.paths.base}`);
-
+			this.events.emitInfo(`Loading base cluster definitions from: ${this.paths.base}`);
 			const baseClusterDef = yield yamlHandler.loadBaseDefinitions(this.paths.base);
-			this.events.emitInfo("Loaded base cluster definition");
 
 			// Load the type configs into their own Map
-			const typeDefinitions = yield yamlHandler.loadTypeDefinitions(path.join(this.paths.base, "/type/*-var.yaml"));
+			const typeDefinitions = yield yamlHandler.loadTypeDefinitions(this.paths.type);
 
 			// Load image tag (usage based on Resource Spec or cluster spec
-			const imageResources = yield yamlHandler.loadImageDefinitions(path.join(this.paths.base, "/images/invision"));
+			const imageResources = yield yamlHandler.loadImageDefinitions(this.paths.images);
 
 			let configPlugin = undefined;
 			if (this.options.configPlugin) {
 				configPlugin = new PluginHandler(this.options.configPlugin.path, this.options.configPlugin.options);
 			}
 			// Load the /cluster 'cluster.yaml' and 'configuration-var.yaml'
-			const clusterDefs = yield yamlHandler.loadClusterDefinitions(path.join(this.paths.base, "/clusters"));
+			const clusterDefs = yield yamlHandler.loadClusterDefinitions(this.paths.cluster);
 
 			//Merge the definitions, render templates and save (if enabled)
 			for (let i=0; i < clusterDefs.length; i++) {
@@ -95,7 +93,6 @@ class Deploymentizer {
 				this.paths.type = (conf.type) ? conf.type.path : undefined;
 				this.paths.images = (conf.images) ? conf.images.path : undefined;
 				this.options.configPlugin = ( conf.plugin || undefined);
-				console.log("%j",this.paths);
 				Object.keys(this.paths).forEach( (key) => {
 					if (!this.paths[key]) {
 						throw new Error (`Missing required value: ${key}`);
@@ -134,7 +131,7 @@ class Deploymentizer {
 			// generating the templates for each resource (if not disabled), using custom ENVs and envs from resource tags.
 			// Save files out
 			const generator = new Generator(def, imageResources,
-																			this.paths.base,
+																			this.paths.resources,
 																			this.paths.output,
 																			this.options.save,
 																			configPlugin);

@@ -26,7 +26,7 @@ describe("Generator", () => {
 			return Promise.coroutine(function* () {
 				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture/clusters");
 				const clusterDef = clusterDefs[0];
-				const generator = new Generator(clusterDef, {}, "./test/fixture", os.tmpdir(), true, configStub);
+				const generator = new Generator(clusterDef, {}, "./test/fixture/resources", os.tmpdir(), true, configStub);
 				expect(clusterDef).to.exist;
 				if (!fse.existsSync( path.join(os.tmpdir(), clusterDef.name())) ) {
 					fse.mkdirsSync( path.join(os.tmpdir(), clusterDef.name()) );
@@ -51,7 +51,7 @@ describe("Generator", () => {
 			return Promise.coroutine(function* () {
 				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture/clusters");
 				const clusterDef = clusterDefs[0];
-				const generator = new Generator(clusterDef, imageResources, "./test/fixture", os.tmpdir(), true, configStub);
+				const generator = new Generator(clusterDef, imageResources, "./test/fixture/resources", os.tmpdir(), true, configStub);
 				expect(clusterDef).to.exist;
 				if (!fse.existsSync( path.join(os.tmpdir(), clusterDef.name())) ) {
 					fse.mkdirsSync( path.join(os.tmpdir(), clusterDef.name()) );
@@ -80,7 +80,7 @@ describe("Generator", () => {
 			return Promise.coroutine(function* () {
 				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture/clusters");
 				const clusterDef = clusterDefs[0];
-				const generator = new Generator(clusterDef, imageResources, "./test/fixture", os.tmpdir(), true, undefined);
+				const generator = new Generator(clusterDef, imageResources, "./test/fixture/resources", os.tmpdir(), true, undefined);
 				expect(clusterDef).to.exist;
 				if (!fse.existsSync( path.join(os.tmpdir(), clusterDef.name())) ) {
 					fse.mkdirsSync( path.join(os.tmpdir(), clusterDef.name()) );

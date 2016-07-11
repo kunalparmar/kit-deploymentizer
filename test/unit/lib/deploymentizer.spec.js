@@ -20,7 +20,7 @@ describe("Deploymentizer", () =>  {
         expect(deploymentizer.paths.base).to.equal("/test/fixture");
         expect(deploymentizer.paths.output).to.equal("/generated");
         expect(deploymentizer.paths.cluster).to.equal("/test/fixture/clusters");
-        expect(deploymentizer.paths.images).to.equal("/test/fixture/manifests/images");
+        expect(deploymentizer.paths.images).to.equal("/test/fixture/images");
         expect(deploymentizer.paths.type).to.equal("/test/fixture/type");
         expect(deploymentizer.paths.resources).to.equal("/test/fixture/resources");
         done();

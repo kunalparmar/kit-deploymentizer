@@ -5,6 +5,7 @@ const Promise = require("bluebird");
 const path = require("path");
 const yaml = require("js-yaml");
 const glob = require("glob-promise");
+const _ = require("lodash");
 const ClusterDefinition = require("../lib/cluster-definition");
 const eventHandler = require("./event-handler");
 const fseWriteFile = Promise.promisify(fse.writeFile);
@@ -45,17 +46,20 @@ class YamlHandler {
   		let imageResourceDefs = {};
       for (let d=0; d < dirs.length; d++ ) {
         // loop through the directories
-        const imageResourceName = dirs[d];
-        eventHandler.emitInfo(`Loading Images for ${imageResourceName}`);
-  			let resourceImages = {};
-  		  const files = yield glob(path.join(basePath, imageResourceName, "*.yaml"));
+        const dir = dirs[d];
+        eventHandler.emitInfo(`Loading Images for ${dir}`);
+  		  const files = yield glob(path.join(basePath, dir, "**/*.yaml"));
         // loop through the files adding by name
         for (let f=0; f<files.length; f++) {
-  				const name = path.parse(files[f]).name;
+					// pull apart the path, we want to index on the path (excluding basePath)
+					const parsedFile = path.parse(files[f].substring(files[f].indexOf(dir)) );
+  				const name = parsedFile.name;
+					const imageResourceName = parsedFile.dir;
   				const image = yield YamlHandler.loadFile(files[f]);
-  				resourceImages[name] = image;
+					// make sure this value is set - but only once
+					if (!imageResourceDefs[imageResourceName]) { imageResourceDefs[imageResourceName] = {} };
+					imageResourceDefs[imageResourceName][name]=image;
         }
-  			imageResourceDefs[imageResourceName] = resourceImages;
       }
   		return imageResourceDefs;
     })();
@@ -68,7 +72,7 @@ class YamlHandler {
 	 */
 	static loadTypeDefinitions(loadPathPattern) {
 		return Promise.coroutine(function* () {
-  		const files = yield glob(loadPathPattern);
+  		const files = yield glob(`${loadPathPattern}/*-var.yaml`);
   		let typeDefs = {};
   		for (let i=0; i < files.length; i++) {
         eventHandler.emitInfo(`Loading typedef: ${files[i]}`);

@@ -38,6 +38,15 @@ function fileInfo(file) {
  */
 class Generator {
 
+	/**
+	 * Configuration options for Generator
+	 * @param  {[type]} clusterDef        Cluster Definition for a given cluster
+	 * @param  {[type]} imageResourceDefs All Image Resources
+	 * @param  {[type]} basePath          Base Path to load Resources from
+	 * @param  {[type]} exportPath        Where to save files
+	 * @param  {[type]} save              Save or not
+	 * @param  {[type]} configPlugin      Plugin to use for loading configuration information
+	 */
 	constructor(clusterDef, imageResourceDefs, basePath, exportPath, save, configPlugin) {
 		this.options = {
 			clusterDef: clusterDef,
@@ -153,7 +162,8 @@ class Generator {
 	  		if (artifact.image_tag) {
 					const artifactBranch = (localConfig[containerName].branch || localConfig.branch);
 	    		if ( !this.options.imageResourceDefs[artifact.image_tag] || !this.options.imageResourceDefs[artifact.image_tag][artifactBranch] ) {
-	    			throw new Error(`Image ${artifact.image_tag} not for for defined branch ${artifactBranch}`);
+						eventHandler.emitWarn(JSON.stringify(this.options.imageResourceDefs));
+	    			throw new Error(`Image ${artifact.image_tag} not found for defined branch (${artifactBranch})`);
 	    		}
 	    		localConfig[containerName].image = this.options.imageResourceDefs[artifact.image_tag][artifactBranch].image;
 	      } else {
@@ -165,7 +175,7 @@ class Generator {
   		if (resource.svc) {
   			localConfig.svc = resource.svc;
   		}
-			eventHandler.emitInfo(`Local Configurtion: ${JSON.stringify(localConfig)}`);
+			//eventHandler.emitInfo(`Local Configurtion: ${JSON.stringify(localConfig)}`);
   		return localConfig;
     }).bind(this)();
 	}
@@ -223,7 +233,7 @@ class Generator {
 	processService(resource, config) {
 		return Promise.coroutine( function* () {
 			// There may not be a service associated with this
-			const serviceTemplate = yield fseReadFile(path.join(this.options.basePath, "resources", "base-svc.mustache"), "utf8");
+			const serviceTemplate = yield fseReadFile(path.join(this.options.basePath, "base-svc.mustache"), "utf8");
 			const svcYaml = resourceHandler.render(serviceTemplate, config);
 			if (this.options.save === true) {
 				yield yamlHandler.saveResourceFile(this.options.exportPath, resource.svc.name, svcYaml);
