@@ -21,6 +21,7 @@ program
 	.option("-c, --clean <boolean>", "Set if the output directory should be deleted and re-created before generating manifest files", parseBoolean, parseBoolean(process.env.CLEAN))
 	.option("-s, --save <boolean>", "Sets if the generated manifest files are saved to the output diretory or not", parseBoolean, parseBoolean(process.env.SAVE))
 	.option("-k, --conf <conf>", "Sets the configure file to load at start up - Required.", process.env.CONF)
+	.option("-d, --debug <boolean>", "Sets debug flag", parseBoolean, parseBoolean(process.env.SAVE))
 	.parse(process.argv)
 ;
 
@@ -40,6 +41,11 @@ eventHandler.on(eventHandler.WARN, function(message) {
 eventHandler.on(eventHandler.FATAL, function(message) {
 	logger.fatal(message);
 });
+if (program.debug) {
+	eventHandler.on(eventHandler.DEBUG, function(message) {
+		logger.debug(message);
+	});
+}
 
 // Run the generator
 deploymentizer
