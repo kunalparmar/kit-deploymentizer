@@ -97,8 +97,9 @@ class ResourceHandler {
 	 * @return {[type]}      [description]
 	 */
 	static loadExternalEnv( envs ) {
+		// make sure its an array.
 		if (!Array.isArray( envs )) {
-			throw new Error("ENV object must be an array");
+			envs = [envs];
 		}
 		let localEnvArray = _.cloneDeep(envs);
 		localEnvArray.forEach( (env) => {
