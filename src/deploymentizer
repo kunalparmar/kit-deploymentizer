@@ -1,10 +1,13 @@
 #!/usr/bin/env node
+'use strict';
 
 const logger = require("log4js").getLogger();
 const program = require("commander");
 const packageJson = require("../package.json");
+const Promise = require("bluebird");
 const Deploymentizer = require("./lib/deploymentizer");
 const eventHandler = require("./util/event-handler");
+const yamlHandler = require("./util/yaml-handler");
 const exit = process.exit;
 
 const parseBoolean = function(str) {
@@ -27,17 +30,14 @@ const parseBoolean = function(str) {
  *		}
  *	}
  * }
-  @param  {[type]} confPath [description]
+ * @param  {[type]} confPath [description]
  * @return {[type]}          [description]
  */
-const loadConf(confPath) {
+const loadConf = function(confPath, version) {
 	return Promise.coroutine(function* () {
-		let exists = yield yamlHandler.exists( this.options.conf );
+		let exists = yield yamlHandler.exists( confPath );
 		if (exists) {
-			const conf = yield yamlHandler.loadFile(this.options.conf);
-			if (conf.version !== this.options.version) {
-				eventHandler.emitFatal(`Unsupported version ${conf.version}, expected ${version}`);
-			}
+			const conf = yield yamlHandler.loadFile(confPath);
 			return conf;
 		} else {
 			eventHandler.emitFatal("No Configuration file found.");
