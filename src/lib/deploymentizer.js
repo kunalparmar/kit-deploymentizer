@@ -10,6 +10,14 @@ const PluginHandler = require("../util/plugin-handler");
 const fse = require("fs-extra");
 const fseRemove = Promise.promisify(fse.remove);
 
+
+const resolve = function(workdir, pathStr) {
+		if (!pathStr) {
+			return undefined;
+		}
+		return path.resolve(workdir, pathStr);
+}
+
 /**
  * Main class used to process deployment files converting templates into deployable manifests.
  */
@@ -27,6 +35,7 @@ class Deploymentizer {
 		this.options = {
 				clean: (args.clean || false),
 				save: (args.save || false),
+				workdir: (args.workdir || ""),
 				configPlugin: undefined,
 				conf: undefined,
 			}
@@ -77,13 +86,16 @@ class Deploymentizer {
 	 */
 	parseConf(conf) {
 		if (conf) {
-			this.paths.base = (conf.base) ? conf.base.path : undefined;
-			this.paths.output = (conf.output) ? conf.output.path : undefined;
-			this.paths.cluster = (conf.cluster) ? conf.cluster.path : undefined;
-			this.paths.resources = (conf.resources) ? conf.resources.path : undefined;
-			this.paths.type = (conf.type) ? conf.type.path : undefined;
-			this.paths.images = (conf.images) ? conf.images.path : undefined;
-			this.options.configPlugin = ( conf.plugin || undefined);
+			this.paths.base = resolve(this.options.workdir, conf.base.path);
+			this.paths.output = resolve(this.options.workdir, conf.output.path);
+			this.paths.cluster = resolve(this.options.workdir, conf.cluster.path);
+			this.paths.resources = resolve(this.options.workdir, conf.resources.path);
+			this.paths.type = resolve(this.options.workdir, conf.type.path);
+			this.paths.images = resolve(this.options.workdir, conf.images.path);
+			if (conf.plugin) {
+				this.options.configPlugin = conf.plugin;
+				this.options.configPlugin.path = resolve(this.options.workdir, conf.plugin.path);
+			}
 			Object.keys(this.paths).forEach( (key) => {
 				if (!this.paths[key]) {
 					throw new Error (`Missing required value: ${key}`);

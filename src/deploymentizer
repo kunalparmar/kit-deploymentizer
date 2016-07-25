@@ -54,7 +54,8 @@ program
 	.usage("[options]")
 	.option("-c, --clean <boolean>", "Set if the output directory should be deleted and re-created before generating manifest files", parseBoolean, parseBoolean(process.env.CLEAN))
 	.option("-s, --save <boolean>", "Sets if the generated manifest files are saved to the output diretory or not", parseBoolean, parseBoolean(process.env.SAVE))
-	.option("-k, --conf <conf>", "Sets the configure file to load at start up - Required.", process.env.CONF)
+	.option("-w, --workdir <string>", "Sets the working directory for reading paths defined in the conf file. Allows absolute paths in conf also.", process.env.WORKDIR)
+	.option("-k, --conf <string>", "Sets the configure file to load at start up - Required.", process.env.CONF)
 	.option("-d, --debug <boolean>", "Sets debug flag", parseBoolean, parseBoolean(process.env.DEBUG))
 	.parse(process.argv)
 ;
@@ -79,6 +80,7 @@ loadConf(program.conf).then( (conf) => {
 	const deploymentizer = new Deploymentizer({
 		clean: program.clean,
 		save: program.save,
+		workdir: program.workdir,
 		conf: conf
 	});
 	// Run the deploymentizer
