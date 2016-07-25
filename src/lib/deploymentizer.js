@@ -14,17 +14,8 @@ const fseRemove = Promise.promisify(fse.remove);
  * Main class used to process deployment files converting templates into deployable manifests.
  */
 class Deploymentizer {
-	constructor(options) {
-		if (!options.loadPath && !options.conf) {
-			throw new Error("Required loadpath or conf not supplied");
-		}
-		this.options = _.merge({
-				clean: false,
-				save: false,
-				conf: undefined,
-				version: "2"
-			}, options);
-		// set defaults
+	constructor(args) {
+		// define require fields
 		this.paths = {
 			base: undefined,
 			output: undefined,
@@ -33,6 +24,13 @@ class Deploymentizer {
 			type: undefined,
 			resources: undefined
 		}
+		this.options = {
+				clean: (args.clean || false),
+				save: (args.save || false),
+				configPlugin: undefined,
+				conf: undefined,
+			}
+		this.options.conf = this.parseConf(args.conf);
 		this.events = eventHandler;
 	}
 
@@ -43,7 +41,6 @@ class Deploymentizer {
 	process() {
 		return Promise.coroutine(function* () {
 
-			yield this.loadConf();
 			this.events.emitInfo(`Initialization: ${JSON.stringify(this.options)}`);
 
 			if (this.options.clean) {
@@ -78,32 +75,23 @@ class Deploymentizer {
 	/**
 	 * Load the conf file if available and merge values.
 	 */
-	loadConf() {
-		return Promise.coroutine(function* () {
-			let exists = yield yamlHandler.exists( this.options.conf );
-			if (exists) {
-				const conf = yield yamlHandler.loadFile(this.options.conf);
-				if (conf.version !== this.options.version) {
-					throw new Error(`Unsupported version ${conf.version}, expected ${this.options.version}`);
+	parseConf(conf) {
+		if (conf) {
+			this.paths.base = (conf.base) ? conf.base.path : undefined;
+			this.paths.output = (conf.output) ? conf.output.path : undefined;
+			this.paths.cluster = (conf.cluster) ? conf.cluster.path : undefined;
+			this.paths.resources = (conf.resources) ? conf.resources.path : undefined;
+			this.paths.type = (conf.type) ? conf.type.path : undefined;
+			this.paths.images = (conf.images) ? conf.images.path : undefined;
+			this.options.configPlugin = ( conf.plugin || undefined);
+			Object.keys(this.paths).forEach( (key) => {
+				if (!this.paths[key]) {
+					throw new Error (`Missing required value: ${key}`);
 				}
-				this.paths.base = (conf.base) ? conf.base.path : undefined;
-				this.paths.output = (conf.output) ? conf.output.path : undefined;
-				this.paths.cluster = (conf.cluster) ? conf.cluster.path : undefined;
-				this.paths.resources = (conf.resources) ? conf.resources.path : undefined;
-				this.paths.type = (conf.type) ? conf.type.path : undefined;
-				this.paths.images = (conf.images) ? conf.images.path : undefined;
-				this.options.configPlugin = ( conf.plugin || undefined);
-				Object.keys(this.paths).forEach( (key) => {
-					if (!this.paths[key]) {
-						throw new Error (`Missing required value: ${key}`);
-					}
-				});
-			} else {
-				this.events.emitFatal("No Configuration file found.");
-				throw new Error("No Configuration file found");
-			}
-			this.events.emitInfo(`Paths set to: ${JSON.stringify(this.paths)}`);
-		}).bind(this)();
+			});
+		} else {
+			throw new Error("No Configuration object.");
+		}
 	}
 
 	/**

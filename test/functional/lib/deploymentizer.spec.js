@@ -18,10 +18,12 @@ describe("Deploymentizer", () => {
         process.env.SECRET_PASSWORD = "mypassword";
         process.env.GITHUB_TOKEN = "s@mpler@ndomt0ken";
         fse.mkdirsSync(path.join(os.tmpdir(), "generated"));
+
+				const conf = yield yamlHandler.loadFile("/test/fixture/kit.yaml");
         const deployer = new Deploymentizer ({
             clean: true,
             save: true,
-            conf: "/test/fixture/kit.yaml"
+            conf: conf
           });
         expect(deployer).to.exist;
         // generate the files from our test fixtures
