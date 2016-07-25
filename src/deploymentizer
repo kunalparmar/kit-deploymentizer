@@ -33,7 +33,7 @@ const parseBoolean = function(str) {
  * @param  {[type]} confPath [description]
  * @return {[type]}          [description]
  */
-const loadConf = function(confPath, version) {
+const loadConf = function(confPath) {
 	return Promise.coroutine(function* () {
 		let exists = yield yamlHandler.exists( confPath );
 		if (exists) {
