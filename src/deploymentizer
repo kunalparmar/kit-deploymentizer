@@ -1,16 +1,50 @@
 #!/usr/bin/env node
 
-var logger = require("log4js").getLogger();
-var program = require("commander");
-var packageJson = require("../package.json");
-var Deploymentizer = require("./lib/deploymentizer");
-var eventHandler = require("./util/event-handler");
-var exit = process.exit;
+const logger = require("log4js").getLogger();
+const program = require("commander");
+const packageJson = require("../package.json");
+const Deploymentizer = require("./lib/deploymentizer");
+const eventHandler = require("./util/event-handler");
+const exit = process.exit;
 
-var parseBoolean = function(str) {
+const parseBoolean = function(str) {
 	return (str === "true");
 };
 
+/**
+ * loads a conf file. Valid conf:
+ * {
+ *	base: { path: "/" },
+ *	output: { path: "/" },
+ *	cluster: { path: "/" },
+ *	resources: { path: "/" },
+ *	type: { path: "/" },
+ *	images: { path: "/" },
+ *	plugin: {
+ *		path: "/",
+ *		options: {
+ *		 // any required options for plugin
+ *		}
+ *	}
+ * }
+  @param  {[type]} confPath [description]
+ * @return {[type]}          [description]
+ */
+const loadConf(confPath) {
+	return Promise.coroutine(function* () {
+		let exists = yield yamlHandler.exists( this.options.conf );
+		if (exists) {
+			const conf = yield yamlHandler.loadFile(this.options.conf);
+			if (conf.version !== this.options.version) {
+				eventHandler.emitFatal(`Unsupported version ${conf.version}, expected ${version}`);
+			}
+			return conf;
+		} else {
+			eventHandler.emitFatal("No Configuration file found.");
+			throw new Error("No Configuration file found");
+		}
+	})();
+}
 /**
  * Most values should be set in the conf file, with the exception of --clean and --save
  * At least --conf flags must be set.
@@ -25,11 +59,6 @@ program
 	.parse(process.argv)
 ;
 
-var deploymentizer = new Deploymentizer({
-	clean: program.clean,
-	save: program.save,
-	conf: program.conf
-});
 // Enable logging of all events from the deploymentizer
 eventHandler.on(eventHandler.INFO, function(message) {
 	logger.info(message);
@@ -46,14 +75,20 @@ if (program.debug) {
 	});
 }
 
-// Run the generator
-deploymentizer
-	.process()
-	.then(function() {
-		exit(0);
-	})
-	.catch(function(err) {
-		logger.fatal(err);
-		throw new Error(err);
-	})
-	.done();
+loadConf(program.conf).then( (conf) => {
+	const deploymentizer = new Deploymentizer({
+		clean: program.clean,
+		save: program.save,
+		conf: conf
+	});
+	// Run the deploymentizer
+	return deploymentizer.process()
+		.then(function() {
+			exit(0);
+		})
+		.catch(function(err) {
+			logger.fatal(err);
+			throw new Error(err);
+		})
+		.done();
+});
