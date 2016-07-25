@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-'use strict';
+"use strict";
 
 const logger = require("log4js").getLogger();
 const program = require("commander");
