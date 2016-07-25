@@ -16,19 +16,19 @@ describe("Deploymentizer", () =>  {
 				type: { path: "/test/fixture/type"},
 				resources: { path: "/test/fixture/resources"},
 			}
-      let options = {
-        save: false,
-        clean: true,
-        conf: conf
-      };
-      const deploymentizer = new Deploymentizer(options);
-      console.log(deploymentizer.paths);
-      expect(deploymentizer.paths.base).to.equal("/test/fixture");
-      expect(deploymentizer.paths.output).to.equal("/generated");
-      expect(deploymentizer.paths.cluster).to.equal("/test/fixture/clusters");
-      expect(deploymentizer.paths.images).to.equal("/test/fixture/images");
-      expect(deploymentizer.paths.type).to.equal("/test/fixture/type");
-      expect(deploymentizer.paths.resources).to.equal("/test/fixture/resources");
+			let options = {
+				save: false,
+				clean: true,
+				conf: conf
+			};
+			const deploymentizer = new Deploymentizer(options);
+			console.log(deploymentizer.paths);
+			expect(deploymentizer.paths.base).to.equal("/test/fixture");
+			expect(deploymentizer.paths.output).to.equal("/generated");
+			expect(deploymentizer.paths.cluster).to.equal("/test/fixture/clusters");
+			expect(deploymentizer.paths.images).to.equal("/test/fixture/images");
+			expect(deploymentizer.paths.type).to.equal("/test/fixture/type");
+			expect(deploymentizer.paths.resources).to.equal("/test/fixture/resources");
 		});
 		it("should fail with invalid conf", (done) => {
 			const conf = {
@@ -39,14 +39,14 @@ describe("Deploymentizer", () =>  {
 				type: { path: "/test/fixture/type"},
 				resources: { path: "/test/fixture/resources"},
 			}
-      let options = {
-        save: false,
-        clean: true,
-        conf: "/test/fixture/bad-kit.yaml"
-      };
+			let options = {
+				save: false,
+				clean: true,
+				conf: "/test/fixture/bad-kit.yaml"
+			};
 			try {
-	      const deploymentizer = new Deploymentizer(options);
-	      done(new Error("Should have failed"));
+				const deploymentizer = new Deploymentizer(options);
+				done(new Error("Should have failed"));
 			} catch (e) {
 				done();
 			}
