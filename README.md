@@ -63,7 +63,7 @@ This section describe the files used by the `deploymentizer` to render the clust
 
 ##### configuration default name: kit.yaml
 
-This is a small configuration file used to configure paths and the plugin to be used by Deploymentizer. You can specify the file by passing in the --conf flag at startup. This is used to set the paths for the various files and configure the plugin used for loading env configuration.
+This is a small configuration file used to configure paths and the plugin to be used by Deploymentizer. You can specify the file by passing in the --conf flag at startup. This is used to set the paths for the various files and configure the plugin used for loading env configuration. Paths can be a combination or relative or absolute paths. If relative, you can supply a `workdir` option from the command line to define the working directory, otherwise assumed to be the `$pwd`.
 
 Default `kit.yaml` looks like:
 ```
