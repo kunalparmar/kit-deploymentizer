@@ -1,7 +1,7 @@
 "use strict";
 
 const expect = require("chai").expect;
-const exec = require('child_process').exec;
+const exec = require("child_process").exec;
 
 describe("Deploymentizer", () => {
 	describe("shell script", () => {
@@ -11,7 +11,7 @@ describe("Deploymentizer", () => {
 			process.env.SECRET_PASSWORD = "mypassword";
 			process.env.GITHUB_TOKEN = "s@mpler@ndomt0ken";
 
-			var cmd = '/src/deploymentizer --conf="/test/fixture/kit.yaml"';
+			var cmd = "/src/deploymentizer --conf=\"/test/fixture/kit.yaml\"";
 
 			exec(cmd, function(error, stdout, stderr) {
 				console.log(`stdout: ${stdout}`);
