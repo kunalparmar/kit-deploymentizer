@@ -63,13 +63,13 @@ This section describe the files used by the `deploymentizer` to render the clust
 
 ##### configuration default name: kit.yaml
 
-This is a small configuration file used to configure paths and the plugin to be used by Deploymentizer. You can specify the file by passing in the --conf flag at startup. This is used to set the paths for the various files and configure the plugin used for loading env configuration. Paths can be a combination or relative or absolute paths. If relative, you can supply a `workdir` option from the command line to define the working directory, otherwise assumed to be the `$pwd`.
+This is a small configuration file used to configure paths and the plugin to be used by Deploymentizer. You can specify the file by passing in the `--conf` flag at startup. This is used to set the paths for the various files and configure the plugin used for loading env configuration. Paths can be a combination or relative or absolute paths. If relative, you can supply a `workdir` option from the command line to define the working directory, otherwise assumed to be the `$pwd`.
 
 Default `kit.yaml` looks like:
 ```
 version: '2'
 base:
-  path: "[PATH-TO-DIRECTORY]"
+  path: /manifests
 images:
   path: /manifests/images
   property: image
@@ -360,10 +360,13 @@ See the [Contributing guide](/CONTRIBUTING.md) for steps on how to contribute to
 ## Todo
 
 - [ ] Allow setting the output file name, not the template name. Allow reuse of individual templates (selectsync/mongoreplica examples)
+- [ ] Remove dependency on `base` files and allow defining and importing of groups of resources instead
+- [ ] Rethink `types`, is this still needed
+- [ ] Change `image` handling - this should be more dynamic with services defining which branch/tag to use
 - [ ] Allow setting the `svc` template to render
-- [ ] Add validation of `yaml` files.
-- [ ] Allow `kit.yaml` to specify file names.
-- [x] Allow plugin to define disabled for service.
+- [ ] Add validation of `yaml` files
+- [ ] Allow `kit.yaml` to specify file names
+- [x] Allow plugin to define disabled for service
 - [x] Use event-handler for logging
 - [x] Remove all sync hotspots
 - [x] fix hardcoded path, using kit.yaml loader

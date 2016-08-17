@@ -11,7 +11,6 @@ ENV \
 	CLEAN=true \
 	OUTPUT=/generated \
 	SAVE=true \
-	LOAD=/manifests \
 	LOG_NAME=kit-deploymentizer
 
 # Copy our source files to the service location
