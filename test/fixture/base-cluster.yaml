@@ -1,0 +1,47 @@
+kind: ClusterNamespace
+metadata:
+  name: base
+  branch: master
+resources:
+  auth:
+    branch: develop
+    kind: deployment
+    file: ./auth/auth-deployment.mustache
+    svc:
+      name: auth-svc
+      labels:
+        - name: "app"
+          value: "invisionapp"
+    containers:
+      auth-con:
+        image_tag: invision/node-auth
+        name: auth
+        env:
+          - name: test
+            value: testbase
+  activity:
+    kind: deployment
+    file: ./activity/activity-deployment.mustache
+    svc:
+      name: activity-svc
+      labels:
+        - name: "app"
+          value: "invisionapp"
+    containers:
+      activity-con:
+        image_tag: invision/node-activity
+        name: activity
+
+
+  envsecret:
+    kind: secret
+    file: ./secrets/example-secret.mustache
+    env:
+      - name: SECRET_USERNAME
+        encoding: "base64"
+        external: true
+      - name: SECRET_PASSWORD
+        encoding: "base64"
+        external: true
+      - name: GITHUB_TOKEN
+        external: true

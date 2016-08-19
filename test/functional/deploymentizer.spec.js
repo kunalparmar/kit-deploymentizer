@@ -1,25 +1,27 @@
-var expect = require("chai").expect;
-var exec = require("child_process").exec;
+"use strict";
 
-describe("Deploymentizer", function() {
-	describe("when parsing simple cluster", function() {
-		it("should parse files", function(done) {
-			exec("./src/deploymentizer --clean=true --pattern=/test/fixture/simple/clusters/*-cluster.yaml --output=/tmp/generated", function(error, stdout, stderr) {
-				expect(error).to.be.null;
-				expect(stderr).to.be.empty;
-				expect(stdout).not.to.be.empty;
-				done();
-			});
-		});
-	});
+const expect = require("chai").expect;
+const exec = require("child_process").exec;
 
-	describe("when getting help", function() {
-		it("should return help information", function(done) {
-			exec("./src/deploymentizer --help", function(error, stdout, stderr) {
-				expect(error).to.be.null;
-				expect(stderr).to.be.empty;
-				expect(stdout).not.to.be.empty;
-				done();
+describe("Deploymentizer", () => {
+	describe("shell script", () => {
+		it("should run successfully", (done) => {
+
+			process.env.SECRET_USERNAME = "myusername";
+			process.env.SECRET_PASSWORD = "mypassword";
+			process.env.GITHUB_TOKEN = "s@mpler@ndomt0ken";
+
+			var cmd = "/src/deploymentizer --conf=\"/test/fixture/kit.yaml\"";
+
+			exec(cmd, function(error, stdout, stderr) {
+				console.log(`stdout: ${stdout}`);
+				console.log(`stderr: ${stderr}`);
+				if (error !== null) {
+					console.log(`exec error: ${error}`);
+					done(error);
+				} else {
+					done();
+				}
 			});
 		});
 	});

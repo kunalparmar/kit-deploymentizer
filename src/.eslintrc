@@ -1,3 +1,24 @@
 {
-	"extends": "eslint-config-invision",
+	"env": {
+		"node": true,
+		"es6": true
+	},
+	"parserOptions": {
+		"sourceType": "node",
+		"ecmaVersion": 6
+	},
+	"rules": {
+		"semi": 2,
+		"indent": [2, "tab", {"SwitchCase": 1}],
+		no-console: [1],
+		no-undef: 0,
+		one-var: 1,
+		prefer-const: 1,
+		no-shadow: 1,
+		consistent-return: 1,
+		"arrow-spacing": [2,{"before":true,"after":true}],
+		"generator-star-spacing": 2,
+		"no-var": 2,
+		"require-yield": 2
+	}
 }

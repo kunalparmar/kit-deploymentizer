@@ -1,0 +1,20 @@
+# Cluster specific Configuration and ENV settings.
+#
+kind: ResourceConfig
+metadata:
+  type: cluster-config
+deployment:
+  replicaCount: 5
+  imagePullPolicy: IfNotPresent
+  livenessProbe:
+    path: /healthcheck
+    port: 80
+    initialDelaySeconds: 30
+    timeoutSeconds: 3
+  containerPort: 80
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+imagePullSecrets:
+  - secret: docker-quay-secret
+  - secret: docker-registry-secret

@@ -7,6 +7,12 @@
     "url": "git://github.com/InVisionApp/kit-deploymentizer"
   },
   "author": "Chesley Brown <chesley@invisionapp.com>",
+  "contributors": [
+    {
+      "name": "Chuck Freitas",
+      "email": "chuck@invisionapp.com"
+    }
+  ],
   "license": "proprietary",
   "bugs": {
     "url": "https://github.com/InVisionApp/kit-deploymentizer/issues"
@@ -17,17 +23,19 @@
   "scripts": {
     "test-unit": "mocha --recursive test/unit",
     "test-functional": "mocha --recursive test/functional",
+    "test": "mocha --recursive test",
     "lint": "eslint src test"
   },
   "dependencies": {
     "bluebird": "3.2.2",
     "commander": "2.9.0",
-    "glob": "6.0.4",
-    "log4js": "0.6.33",
+    "fs-extra": "0.30.0",
+    "glob-promise": "1.0.6",
     "js-yaml": "3.5.2",
     "lodash": "4.3.0",
-    "mkdirp": "0.5.1",
-    "rimraf": "2.5.2"
+    "log4js": "0.6.33",
+    "mustache": "2.2.1",
+    "request-promise": "3.0.0"
   },
   "devDependencies": {
     "chai": "3.5.0",

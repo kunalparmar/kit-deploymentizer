@@ -1,0 +1,21 @@
+kind: ClusterNamespace
+metadata:
+  name: test-fixture
+  branch: testing
+  type: test
+resources:
+  auth:
+    branch: develop
+    svc:
+      name: auth-svc
+      labels:
+        - name: "app"
+          value: "invisionapp"
+    containers:
+      auth-con:
+        name: auth
+        env:
+          - name: test
+            value: testvalue
+  activity:
+    disable: true

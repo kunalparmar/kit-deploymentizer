@@ -1,6 +1,0 @@
-root: true
-nested:
-  fromFile:
-    - ./includes/first.yaml
-    - ./includes/second.yaml
-    - ./includes/third.yaml

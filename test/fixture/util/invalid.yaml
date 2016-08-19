@@ -1,0 +1,6 @@
+// Dont think this is all valid
+  - something - valid: yaml file
+test = {
+    my: "Object",
+    is: "Good"
+}
