@@ -19,7 +19,7 @@ describe("PluginHandler", () =>  {
         const options = { configPath: "./test/fixture/config" }
   			const handler = new PluginHandler("../../../src/plugin/file-config", options);
 				expect(handler).to.exist;
-				const config = yield handler.fetch( "service", "environment", "example" )
+				const config = yield handler.fetch( { name: "service" }, "example" )
 				expect(config).to.exist;
 				expect(config.env).to.exist;
 				expect(config.branch).to.exist;
@@ -39,7 +39,7 @@ describe("PluginHandler", () =>  {
         const options = { configPath: "./test/fixture/config" }
   			const handler = new PluginHandler("../../../src/plugin/file-config", options);
 				expect(handler).to.exist;
-				const config = yield handler.fetch( "service", "environment", "not-here" )
+				const config = yield handler.fetch( { name: "service" }, "not-here" )
 				done();
 			})().catch( (err) => {
 				done(err);
