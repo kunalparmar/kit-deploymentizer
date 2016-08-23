@@ -273,14 +273,16 @@ spec: {{{! If Ports are not defined, default to below }}}
 ```
 
 #### Plugin For ENV configuration
-The plugin module should export a class that will be instantiated passing in any
-parameters defined in the the kit configuration file loaded by the deploymentizer.
+The plugin module should export a class that will be instantiated passing in any parameters defined in the 
+kit configuration file loaded by the deploymentizer to the objects constructor.
 
-The class must contain a function named `fetch`, accepting the parameters `( serviceName, environment, cluster )`. Example usage:
+The class must contain a function named `fetch`, accepting the parameters `( service, cluster )`. 
+Service is the resource container object, and cluster is the cluster name as defined by the `ClusterNamespace.metadata.name`.
 
+Example usage:
 ```
 const envConfig = new EnvConfig(options);
-envConfig.fetch( serviceName, environment, cluster );
+envConfig.fetch( serviceName, cluster );
 ```
 The `fetch` function must return a Promise. Promises will be converted to bluebird promise via `Promise.resolve(envService.fetch( serviceName, environment, cluster ))`
 
@@ -292,7 +294,7 @@ plugin:
     configPath: "/test/fixture/config"
 ```
 
-Calling this with any invalid values (ie wrong service, cluster, env) should return a error.  This will be logged and skipped - not halt processing.
+Calling this with any invalid values (ie wrong service, cluster) should return a error.  This will be logged and skipped - not halt processing.
 
 This will be required at system startup and executed _asynchronously_ for every Resource listed in the cluster definition.
 

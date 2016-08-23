@@ -36,6 +36,9 @@ class EnvApiClient {
 	 * to use when invoking the env-api service. If this annotation is not present the request 
 	 * is skipped. The annotation is `kit-deploymentizer/env-api-service: [GIT-HUB-PROJECT-NAME]`
 	 * 
+	 * Another, optional, annotation sets the branch to use by the env-api service. This annotation 
+	 * is `kit-deploymentizer/env-api-branch: [GIT-HUB-BRANCH-NAME]` 
+	 * 
 	 * Expects JSON results in the format of:
 	 * {
 	 *   env: {
@@ -87,8 +90,13 @@ class EnvApiClient {
 			}
 			// move the k8s values to the base object
 			if (config.k8s && typeof config.k8s === 'object') {
-				Object.keys(config.k8s).forEach( (key) => {
-					result[key] = config.k8s[key];
+				let props = config.k8s;
+				// if we get back a cluster level object, just parse that - otherwise use default
+				if (config.k8s[cluster]) {
+					props = config.k8s[cluster]
+				} 
+				Object.keys(props).forEach( (key) => {
+					result[key] = props[key];
 				});
 			}
 			return result;
