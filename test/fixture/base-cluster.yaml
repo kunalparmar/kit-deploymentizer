@@ -16,6 +16,8 @@ resources:
       auth-con:
         image_tag: invision/node-auth
         name: auth
+        annotations:
+          kit-deploymentizer/env-api-service: node-auth
         env:
           - name: test
             value: testbase

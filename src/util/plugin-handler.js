@@ -8,15 +8,15 @@ const eventHandler = require("./event-handler");
  */
 class PluginHandler {
 
-  /**
-   * Load the plugin defined
-   * @param  {[type]} pluginPath [description]
-   * @return {[type]}            [description]
-   */
-  constructor(pluginPath, options) {
-    const plugin = require(pluginPath)
+	/**
+	 * Load the plugin defined
+	 * @param  {[type]} pluginPath [description]
+	 * @return {[type]}            [description]
+	 */
+	constructor(pluginPath, options) {
+		const plugin = require(pluginPath)
 		this.configService = new plugin(options);
-  }
+	}
 
 	/**
 	 * Invoke the defined Configuration Service returning the result.
@@ -29,19 +29,18 @@ class PluginHandler {
 	 *  }
 	 * other formats can be added later.
 	 *
-	 * @param  {[type]} serviceName to get env values for
-	 * @param  {[type]} environment that the service will run in
+	 * @param  {[type]} service     object to get env values for, should contain the resource service object
 	 * @param  {[type]} cluster     that the service will run on
 	 * @return {[type]}             A promise fulfilled with the ENV values for the given service/env/cluster
 	 */
-	fetch( serviceName, environment, cluster ) {
+	fetch( service, cluster ) {
 		// Convert to a Bluebird Promise since we dont know what type we will get back.
 		return Promise.resolve(
-        this.configService.fetch( serviceName, environment, cluster )
-      ).catch( (err) => {
-        eventHandler.emitWarn(`Configuration could not be loaded for ${serviceName} in ${environment} for cluster ${cluster}`);
-        return {};
-      });
+				this.configService.fetch( service, cluster )
+			).catch( (err) => {
+				eventHandler.emitWarn(`Configuration could not be loaded for ${service.name} for cluster ${cluster}`);
+				return {};
+			});
 	}
 }
 

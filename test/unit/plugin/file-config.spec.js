@@ -12,7 +12,7 @@ describe("File Configuration plugin", () =>  {
 	describe("Load", () =>  {
 		it("should load configuration object", (done) => {
 			Promise.coroutine(function* () {
-				const config = yield fileConfig.fetch( "service", "environment", "example" )
+				const config = yield fileConfig.fetch( { name: "service" }, "example" )
 				expect(config).to.exist;
 				expect(config.branch).to.exist;
 				expect(config.branch).to.equal("develop");
@@ -28,7 +28,7 @@ describe("File Configuration plugin", () =>  {
 
 		it("should fail with file not found", (done) => {
 			Promise.coroutine(function* () {
-				const config = yield fileConfig.fetch( "service", "environment", "not-here" )
+				const config = yield fileConfig.fetch( { name: "service" }, "not-here" )
 				done(new Error("Should faile with file not found"));
 			})().catch( (err) => {
 				done();

@@ -17,5 +17,7 @@ before( () => {
   eventHandler.on(eventHandler.FATAL, function(message) {
   	logger.fatal(message);
   });
-
+	eventHandler.on(eventHandler.DEBUG, function(message) {
+		logger.debug(message);
+	});
 });

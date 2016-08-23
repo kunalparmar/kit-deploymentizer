@@ -146,7 +146,7 @@ class Generator {
 				// If we have a plugin use it to load env and other config values
 	      if (this.configPlugin) {
 	        // get Configuration from plugin
-	        const envConfig = yield this.configPlugin.fetch( artifact.name, this.options.clusterDef.type(), this.options.clusterDef.name() );
+	        const envConfig = yield this.configPlugin.fetch( artifact, this.options.clusterDef.name() );
 	        // merge these in --> At this point, envConfig will overwrite anything in the cluster def.
 	        localConfig[containerName] = resourceHandler.merge(artifact, envConfig);
 	      }
@@ -158,8 +158,10 @@ class Generator {
 	  			localConfig[containerName].env = env;
 	  		}
 
-	  		// Find the image tag name, if not defined skip
-	  		if (artifact.image_tag) {
+	  		// If an image is not predefined, try to find the image tag 
+				//   (this defines the name of the directory containing images based on branch), 
+				//   if not defined skip
+	  		if (!localConfig[containerName].image && artifact.image_tag) {
 					const artifactBranch = (localConfig[containerName].branch || localConfig.branch);
 	    		if ( !this.options.imageResourceDefs[artifact.image_tag] || !this.options.imageResourceDefs[artifact.image_tag][artifactBranch] ) {
 						eventHandler.emitWarn(JSON.stringify(this.options.imageResourceDefs));
