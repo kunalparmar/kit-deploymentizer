@@ -21,13 +21,11 @@
   - name: Push version tag
     type: push
     tag: master
-    service: app
     image_tag: "v2"
     registry: quay.io
     image_name: quay.io/invision/kit-deploymentizer
   - name: Push branch and commit tag
     type: serial
-    service: app
     tag: ^(master|PRERELEASE-.*)$
     steps:
     - name: Push Branch Tag
