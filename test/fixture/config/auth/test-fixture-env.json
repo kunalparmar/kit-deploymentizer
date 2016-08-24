@@ -4,5 +4,8 @@
     { "name": "ENV_TWO", "value": "value two"},
     { "name": "ENV_THREE", "value": "value three"}
   ],
-  "branch": "master"
+  "branch": "master",
+  "deployment": {
+    "replicaCount": 10
+  }
 }

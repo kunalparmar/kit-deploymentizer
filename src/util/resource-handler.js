@@ -20,7 +20,7 @@ class ResourceHandler {
 	static merge(baseObj, sourceObj) {
 
 		// Now we have both objects, Merge. The Merge command merges objects into a new Object.
-		return _.mergeWith({}, baseObj, sourceObj, (objValue, srcValue, key, object, source, stack) => {
+		return _.mergeWith({}, _.cloneDeep(baseObj), sourceObj, (objValue, srcValue, key, object, source, stack) => {
 			// Handle case where srcValue is null, DO NOT set merged value to null, use ObjValue
 			if (srcValue === null) {
 				return objValue;
