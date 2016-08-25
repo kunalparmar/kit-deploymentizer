@@ -272,6 +272,83 @@ spec: {{{! If Ports are not defined, default to below }}}
 
 ```
 
+
+#### Mapping configuration in template
+This is an example of the values passed to the mustache template engine to render. This example is from the test data located in the `/test/fixtures` directory. 
+``` json
+{
+    "kind": "ResourceConfig",
+    "metadata": {
+        "type": "test"
+    },
+    "deployment": {
+        "replicaCount": 2,
+        "imagePullPolicy": "IfNotPresent",
+        "livenessProbe": {
+            "path": "/healthcheck",
+            "port": 80,
+            "initialDelaySeconds": 30,
+            "timeoutSeconds": 3
+        },
+        "containerPort": 80,
+        "rollingUpdate": {
+            "maxUnavailable": 1,
+            "maxSurge": 1
+        }
+    },
+    "imagePullSecrets": [
+        {
+            "secret": "docker-quay-secret"
+        },
+        {
+            "secret": "docker-registry-secret"
+        }
+    ],
+    "env": null,
+    "branch": "develop",
+    "name": "auth",
+    "auth-con": {
+        "image_tag": "invision/node-auth",
+        "name": "auth",
+        "annotations": {
+            "kit-deploymentizer/env-api-service": "node-auth"
+        },
+        "env": [
+            {
+                "name": "test",
+                "value": "testvalue"
+            },
+            {
+                "name": "ENV_ONE",
+                "value": "value one"
+            },
+            {
+                "name": "ENV_TWO",
+                "value": "value two"
+            },
+            {
+                "name": "ENV_THREE",
+                "value": "value three"
+            }
+        ],
+        "branch": "master",
+        "deployment": {
+            "replicaCount": 10
+        },
+        "image": "quay.io/invision/node-auth:master-42e7122a0718e25b"
+    },
+    "svc": {
+        "name": "auth-svc",
+        "labels": [
+            {
+                "name": "app",
+                "value": "invisionapp"
+            }
+        ]
+    }
+}
+```
+
 #### Plugin For ENV configuration
 The plugin module should export a class that will be instantiated passing in any parameters defined in the 
 kit configuration file loaded by the deploymentizer to the objects constructor.

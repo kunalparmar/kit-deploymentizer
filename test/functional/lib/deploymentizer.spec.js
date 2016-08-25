@@ -70,5 +70,48 @@ describe("Deploymentizer", () => {
 				done(err);
 			});
 		});
+
+		it("should create multiple clusters and not not mingle image tags", (done) => {
+
+			Promise.coroutine(function* () {
+				process.env.SECRET_USERNAME = "myusername";
+				process.env.SECRET_PASSWORD = "mypassword";
+				process.env.GITHUB_TOKEN = "s@mpler@ndomt0ken";
+				fse.mkdirsSync(path.join(os.tmpdir(), "generated"));
+
+				let conf = yield yamlHandler.loadFile("/test/fixture/kit.yaml");
+				// remove the plugin 
+				delete conf.plugin;
+
+				const deployer = new Deploymentizer ({
+						clean: true,
+						save: true,
+						conf: conf
+					});
+				expect(deployer).to.exist;
+				// generate the files from our test fixtures
+				yield deployer.process();
+				// load them back in and validate values
+				const authOther = yield yamlHandler.loadFile(path.join(os.tmpdir(), "generated", "other-test-fixture", "auth-deployment.yaml"));
+				expect(authOther).to.exist;
+				expect(authOther.metadata.name).to.equal("auth-deployment");
+				expect(authOther.spec.replicas).to.equal(7);
+				expect(authOther.spec.template.spec.containers[0]).to.exist;
+				expect(authOther.spec.template.spec.containers[0].image).to.exist;
+				expect(authOther.spec.template.spec.containers[0].image).to.contain("test");
+
+				const authTest = yield yamlHandler.loadFile(path.join(os.tmpdir(), "generated", "test-fixture", "auth-deployment.yaml"));
+				expect(authTest).to.exist;
+				expect(authTest.metadata.name).to.equal("auth-deployment");
+				expect(authTest.spec.replicas).to.equal(2);
+				expect(authTest.spec.template.spec.containers[0]).to.exist;
+				expect(authTest.spec.template.spec.containers[0].image).to.exist;
+				expect(authTest.spec.template.spec.containers[0].image).to.contain("develop");
+
+				done();
+			})().catch( (err) => {
+				done(err);
+			});
+		});
 	});
 });

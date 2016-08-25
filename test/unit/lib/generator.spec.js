@@ -50,7 +50,7 @@ describe("Generator", () => {
 
 			return Promise.coroutine(function* () {
 				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture/clusters");
-				const clusterDef = clusterDefs[0];
+				const clusterDef = clusterDefs[1];
 				const generator = new Generator(clusterDef, imageResources, "./test/fixture/resources", os.tmpdir(), true, configStub);
 				expect(clusterDef).to.exist;
 				if (!fse.existsSync( path.join(os.tmpdir(), clusterDef.name())) ) {
@@ -79,7 +79,7 @@ describe("Generator", () => {
 
 			return Promise.coroutine(function* () {
 				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture/clusters");
-				const clusterDef = clusterDefs[0];
+				const clusterDef = clusterDefs[1];
 				const generator = new Generator(clusterDef, imageResources, "./test/fixture/resources", os.tmpdir(), true, undefined);
 				expect(clusterDef).to.exist;
 				if (!fse.existsSync( path.join(os.tmpdir(), clusterDef.name())) ) {
@@ -101,8 +101,6 @@ describe("Generator", () => {
 			});
 
 		});
-
-
 	});
 
 });
