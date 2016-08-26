@@ -14,6 +14,7 @@ class PluginHandler {
 	 * @return {[type]}            [description]
 	 */
 	constructor(pluginPath, options) {
+		eventHandler.emitInfo(`Plugin path used: ${pluginPath}`);
 		const plugin = require(pluginPath)
 		this.configService = new plugin(options);
 	}

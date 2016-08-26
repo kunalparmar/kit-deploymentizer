@@ -13,7 +13,7 @@ resources:
 output:
   path: /generated
 plugin:
-  path: /src/plugin/file-config
+  path: "../plugin/file-config"
   options:
     configPath: "/test/fixture/config"
 

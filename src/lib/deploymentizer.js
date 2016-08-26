@@ -94,7 +94,7 @@ class Deploymentizer {
 			this.paths.images = resolve(this.options.workdir, conf.images.path);
 			if (conf.plugin) {
 				this.options.configPlugin = conf.plugin;
-				this.options.configPlugin.path = resolve(this.options.workdir, conf.plugin.path);
+				this.options.configPlugin.path = conf.plugin.path;
 			}
 			Object.keys(this.paths).forEach( (key) => {
 				if (!this.paths[key]) {
