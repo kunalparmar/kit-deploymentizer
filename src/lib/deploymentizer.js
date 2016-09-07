@@ -38,6 +38,7 @@ class Deploymentizer {
 				workdir: (args.workdir || ""),
 				configPlugin: undefined,
 				conf: undefined,
+				resource: (args.resource || undefined)
 			}
 		this.options.conf = this.parseConf(args.conf);
 		this.events = eventHandler;
@@ -134,7 +135,8 @@ class Deploymentizer {
 																			this.paths.resources,
 																			this.paths.output,
 																			this.options.save,
-																			configPlugin);
+																			configPlugin,
+																			this.options.resource);
 			return generator.process();
 		});
 	}

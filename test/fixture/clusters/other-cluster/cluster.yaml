@@ -18,7 +18,7 @@ resources:
           - name: test
             value: testvalue
   activity:
-    disable: true
+    disable: false
 
   envsecret:
     disable: true

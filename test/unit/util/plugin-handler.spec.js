@@ -34,15 +34,15 @@ describe("PluginHandler", () =>  {
 			});
 		});
 
-		it("should not fail even with file not found", (done) => {
+		it("should fail with file not found", (done) => {
 			Promise.coroutine(function* () {
         const options = { configPath: "./test/fixture/config" }
   			const handler = new PluginHandler("../../../src/plugin/file-config", options);
 				expect(handler).to.exist;
 				const config = yield handler.fetch( { name: "service" }, "not-here" )
-				done();
-			})().catch( (err) => {
 				done(err);
+			})().catch( (err) => {
+				done();
 			});
 		});
 
