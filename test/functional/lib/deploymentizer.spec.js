@@ -113,5 +113,44 @@ describe("Deploymentizer", () => {
 				done(err);
 			});
 		});
+
+		it("should create single resource for other cluster", (done) => {
+
+			Promise.coroutine(function* () {
+				process.env.SECRET_USERNAME = "myusername";
+				process.env.SECRET_PASSWORD = "mypassword";
+				process.env.GITHUB_TOKEN = "s@mpler@ndomt0ken";
+				fse.mkdirsSync(path.join(os.tmpdir(), "generated"));
+
+				let conf = yield yamlHandler.loadFile("/test/fixture/kit.yaml");
+				// remove the plugin 
+				delete conf.plugin;
+
+				const deployer = new Deploymentizer ({
+						clean: true,
+						save: true,
+						conf: conf,
+						resource: "activity"
+					});
+				expect(deployer).to.exist;
+				// generate the files from our test fixtures
+				yield deployer.process();
+				// load them back in and validate values
+				const activityOther = yield yamlHandler.loadFile(path.join(os.tmpdir(), "generated", "other-test-fixture", "activity-deployment.yaml"));
+				expect(activityOther).to.exist;
+				expect(activityOther.metadata.name).to.equal("activity-deployment");
+				expect(activityOther.spec.template.spec.containers[0].image).to.contain("test");
+				// not requested
+				const authOther = fse.existsSync(path.join(os.tmpdir(), "generated", "other-test-fixture", "auth-deployment.yaml"));
+				expect(authOther).to.be.false;
+				// disabled in this cluster
+				const activityTest = fse.existsSync(path.join(os.tmpdir(), "generated", "test-fixture", "activity-deployment.yaml"));
+				expect(activityTest).to.be.false;
+
+				done();
+			})().catch( (err) => {
+				done(err);
+			});
+		});
 	});
 });

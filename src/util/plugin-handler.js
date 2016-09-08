@@ -39,8 +39,8 @@ class PluginHandler {
 		return Promise.resolve(
 				this.configService.fetch( service, cluster )
 			).catch( (err) => {
-				eventHandler.emitWarn(`Configuration could not be loaded for ${service.name} for cluster ${cluster}`);
-				return {};
+				eventHandler.emitFatal(`Configuration could not be loaded for ${service.name} for cluster ${cluster} stopping processing.`);
+				throw err;
 			});
 	}
 }

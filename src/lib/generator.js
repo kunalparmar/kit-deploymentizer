@@ -47,13 +47,14 @@ class Generator {
 	 * @param	{[type]} save							Save or not
 	 * @param	{[type]} configPlugin			Plugin to use for loading configuration information
 	 */
-	constructor(clusterDef, imageResourceDefs, basePath, exportPath, save, configPlugin) {
+	constructor(clusterDef, imageResourceDefs, basePath, exportPath, save, configPlugin, resource) {
 		this.options = {
 			clusterDef: clusterDef,
 			imageResourceDefs: imageResourceDefs,
 			basePath: basePath,
 			exportPath: path.join(exportPath, clusterDef.name()),
-			save: (save || false)
+			save: (save || false),
+			resource: (resource || undefined)
 		};
 		this.configPlugin = configPlugin;
 	}
@@ -70,11 +71,29 @@ class Generator {
 			// Create the output directory if it already does not exist.
 			yield createClusterDirectory(this.options.exportPath);
 			const resources = this.options.clusterDef.resources();
-			let promises = [];
-			const keys = Object.keys(resources);
-			for (let i = 0; i < keys.length; i++) {
-				const resourceName = keys[i];
-				let resource = resources[resourceName];
+			if (this.options.resource) {
+				// processing single resource
+				let resource = resources[this.options.resource]
+				if (!resource) {
+					eventHandler.emitWarn(`Resource requested ${this.options.resource} was not found in cluster ${this.options.clusterDef.name()}`);
+				} else{
+					yield this.processSingleResource(this.options.resource, resource);
+				}
+			} else {
+				// processing all resources
+				const keys = Object.keys(resources);
+				for (let i = 0; i < keys.length; i++) {
+					const resourceName = keys[i];
+					let resource = resources[resourceName];
+					yield this.processSingleResource(resourceName, resource);
+				}
+			}
+			return;
+		}).bind(this)();
+	}
+
+	processSingleResource(resourceName, resource) {
+		return Promise.coroutine(function* () {
 				if (resource.disable === true) {
 					eventHandler.emitWarn(`Resource ${resourceName} is disabled, skipping...`);
 				} else {
@@ -101,8 +120,6 @@ class Generator {
 						yield this.processService(resource, localConfig);
 					}
 				}
-			}
-			return;
 		}).bind(this)();
 	}
 
