@@ -87,7 +87,8 @@ plugin:
 
 ##### base-cluster.yaml
 
-Defines the over all list of resources. These are included by default in all local cluster configuration unless explicitly disabled.
+Defines the over all list of resources. 
+These are included by default in all local cluster configuration unless explicitly disabled.
 
 
 ```
@@ -216,7 +217,10 @@ You can override individual resource values here, including which branch a resou
 The name of the external ENV must match the defined name in the `resource.[RESOURCE-NAME].env.name` definition.
 
 ##### Disable a Service
-In order to disable a service for a specific cluster, add the `resources.[RESOURCE-NAME].disable: true`. This will keep the `deploymentizer` from generating a deployment/service file for that specific resource.
+By default any resource defined in a cluster is considered enabled. You can explicitly change this by setting the value `disable: true`.  
+For example, in order to disable a service for a specific cluster, add the `resources.[RESOURCE-NAME].disable: true`. This will keep the `deploymentizer` from generating a deployment/service file for that specific resource. 
+If managing lots of clusters, it can be helpful to define your resource in the base cluster file, but configure it as `disable: true` initially. Then only enable it for clusters your want that service deployed on. 
+The other option is to configure it in the base cluster as `disable: false` and enabled it specifically for each cluster.
 
 ##### Adding a Service
 You can add a service just for the cluster by defining the values here. This would allow you to test a service only on a specific cluster before rolling it out to all clusters. The required fields would be:
@@ -371,7 +375,7 @@ plugin:
     configPath: "/test/fixture/config"
 ```
 
-Calling this with any invalid values (ie wrong service, cluster) should return a error.  This will be logged and skipped - not halt processing.
+Calling this with any invalid values (ie wrong service, cluster) should return a error and will stop processing.
 
 This will be required at system startup and executed _asynchronously_ for every Resource listed in the cluster definition.
 
@@ -431,6 +435,7 @@ The following environment variables are used by this service.
 | `CLEAN` | Set if the output directory should be deleted and re-created before generating manifest files | yes | `false` |
 | `SAVE` | Sets if the generated manifest files are saved to the output diretory or not | yes | `true` |
 | `CONF` | Sets the path the config file to load | yes | `/manifests/kit.yaml` |
+| `RESOURCE` | Defines specific resource to generate. If not set, generates all resources. | no | `` |
 
 ## Contributing
 
