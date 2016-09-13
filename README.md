@@ -185,6 +185,7 @@ metadata:
   name: [Name of Cluster - required]
   branch: [Branch used for deployment of cluster, can be overridden at the resource level]
   type: [ type of cluster, used to import type specific deployment information, can be overridden at the resource level]
+  disable: [ set to true to have deploymentizer skip processing of this cluster ]
 ```
 An example file would look like:
 

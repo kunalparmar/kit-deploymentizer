@@ -48,6 +48,15 @@ class ClusterDefinition {
 	}
 
 	/**
+	 * Clusters can be disabled by adding a metadata.disable == true
+	 * This will keep the cluster from being generated.
+	 * @return {boolean} if a cluster has been marked disable === true
+	 */
+	disabled() {
+		return (this.cluster.metadata.disable && this.cluster.metadata.disable === true);
+	}
+
+	/**
 	 * Resources for this cluster
 	 * @return { "resource-name": data, ...} resource map by name
 	 */
