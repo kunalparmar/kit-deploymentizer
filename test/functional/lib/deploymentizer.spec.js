@@ -152,5 +152,30 @@ describe("Deploymentizer", () => {
 				done(err);
 			});
 		});
+
+		it("should not generate disabled cluster", (done) => {
+
+			Promise.coroutine(function* () {
+				fse.mkdirsSync(path.join(os.tmpdir(), "generated"));
+				let conf = yield yamlHandler.loadFile("/test/fixture/kit.yaml");
+
+				const deployer = new Deploymentizer ({
+						clean: true,
+						save: true,
+						conf: conf
+					});
+				expect(deployer).to.exist;
+				// generate the files from our test fixtures
+				yield deployer.process();
+				// disabled this cluster
+				const clusterDir = fse.existsSync(path.join(os.tmpdir(), "generated", "disabled-test-fixture"));
+				expect(clusterDir).to.be.false;
+
+				done();
+			})().catch( (err) => {
+				done(err);
+			});
+		});
+
 	});
 });

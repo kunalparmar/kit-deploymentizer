@@ -128,16 +128,21 @@ class Deploymentizer {
 			// Merge with the Base Definitions.
 			def.apply(baseClusterDef);
 			this.events.emitInfo("Done Merging Cluster Definitions");
-			// apply the correct image tag based on cluster type or resource type
-			// generating the templates for each resource (if not disabled), using custom ENVs and envs from resource tags.
-			// Save files out
-			const generator = new Generator(def, imageResources,
-																			this.paths.resources,
-																			this.paths.output,
-																			this.options.save,
-																			configPlugin,
-																			this.options.resource);
-			return generator.process();
+			if (def.disabled()) {
+				this.events.emitInfo(`Cluster ${def.name()} is disabled, skipping`);
+				return;
+			} else {
+				// apply the correct image tag based on cluster type or resource type
+				// generating the templates for each resource (if not disabled), using custom ENVs and envs from resource tags.
+				// Save files out
+				const generator = new Generator(def, imageResources,
+																				this.paths.resources,
+																				this.paths.output,
+																				this.options.save,
+																				configPlugin,
+																				this.options.resource);
+				return generator.process();
+			}
 		});
 	}
 }
