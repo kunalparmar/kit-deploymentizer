@@ -22,3 +22,4 @@ plugin:
 #  options:
 #    apiUrl: "http://somehost/v1/api"
 #    apiToken: "s0me-t0ken-g0es-here"
+#    timeout: 30000

@@ -19,6 +19,7 @@ class EnvApiClient {
 		}
 		this.apiUrl = options.apiUrl;
 		this.apiToken = options.apiToken;
+		this.timeout = (options.timeout || 15000);
 	}
 
 	/**
@@ -73,7 +74,7 @@ class EnvApiClient {
 				qs: query,
 				headers: { 'X-Auth-Token': this.apiToken },
 				json: true,
-				timeout: 10000
+				timeout: this.timeout
 			};
 			let config = yield rp(options);
 
