@@ -37,6 +37,14 @@ describe("ENV API Client Configuration plugin", () =>  {
       expect(apiConfig.timeout).to.equal(20000);
 			done();
 		});
+		it("should load plugin successfully and default timeout", (done) => {
+      const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN"}
+			const ApiConfig = require("../../../src/plugin/env-api-client");
+      const apiConfig = new ApiConfig(options);
+      expect(apiConfig).to.exist;
+      expect(apiConfig.timeout).to.equal(15000);
+			done();
+		});
 	});
 
 });
