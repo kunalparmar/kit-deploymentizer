@@ -75,9 +75,11 @@ class Deploymentizer {
 			const clusterDefs = yield yamlHandler.loadClusterDefinitions(this.paths.cluster);
 
 			//Merge the definitions, render templates and save (if enabled)
+			let processClusters = [];
 			for (let i=0; i < clusterDefs.length; i++) {
-				yield this.processClusterDef( clusterDefs[i], typeDefinitions, baseClusterDef, imageResources, configPlugin )
+				processClusters.push(this.processClusterDef( clusterDefs[i], typeDefinitions, baseClusterDef, imageResources, configPlugin ));
 			};
+			yield Promise.all(processClusters);
 			this.events.emitInfo(`Finished processing files...` );
 		}).bind(this)();
 	}
