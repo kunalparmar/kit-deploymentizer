@@ -95,11 +95,11 @@ class Generator {
 	processSingleResource(resourceName, resource) {
 		return Promise.coroutine(function* () {
 				if (resource.disable === true) {
-					eventHandler.emitWarn(`Resource ${resourceName} is disabled, skipping...`);
+					eventHandler.emitWarn(`Resource ${resourceName} is disabled in cluster ${this.options.clusterDef.name()}, skipping...`);
 				} else {
 					let localConfig = yield this._createLocalConfiguration(this.options.clusterDef.configuration(), resourceName, resource);
 					if (resource.file) {
-						eventHandler.emitInfo(`Processing Resource ${resourceName}`);
+						eventHandler.emitInfo(`Processing Resource ${resourceName} for cluster ${this.options.clusterDef.name()}`);
 						const fileStats = fileInfo(resource.file);
 						switch (fileStats.ext) {
 							case ".yaml":
@@ -115,7 +115,7 @@ class Generator {
 						}
 					}
 					if (resource.svc) {
-						eventHandler.emitInfo(`Processing Service ${resource.svc.name} `);
+						eventHandler.emitInfo(`Processing Service ${resource.svc.name} for cluster ${this.options.clusterDef.name()}`);
 						// Create local config for each resource, includes local envs, svc info and image tag
 						yield this.processService(resource, localConfig);
 					}
@@ -199,7 +199,7 @@ class Generator {
 			if (resource.svc) {
 				localConfig.svc = resource.svc;
 			}
-			eventHandler.emitDebug(`Local Configurtion for ${resourceName}: ${JSON.stringify(localConfig)}`);
+			eventHandler.emitDebug(`Local Configuration for ${resourceName}: ${JSON.stringify(localConfig)}`);
 			return localConfig;
 		}).bind(this)();
 	}

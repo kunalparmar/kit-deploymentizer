@@ -29,8 +29,7 @@ class Deploymentizer {
 			output: undefined,
 			cluster: undefined,
 			images: undefined,
-			type: undefined,
-			resources: undefined
+			type: undefined
 		}
 		this.options = {
 				clean: (args.clean || false),
@@ -38,7 +37,8 @@ class Deploymentizer {
 				workdir: (args.workdir || ""),
 				configPlugin: undefined,
 				conf: undefined,
-				resource: (args.resource || undefined)
+				resource: (args.resource || undefined),
+				clusterType: (args.clusterType || undefined)
 			}
 		this.options.conf = this.parseConf(args.conf);
 		this.events = eventHandler;
@@ -120,18 +120,23 @@ class Deploymentizer {
 	processClusterDef(def, typeDefinitions, baseClusterDef, imageResources, configPlugin) {
 		return Promise.try( () => {
 			if (def.type()) {
+				if (this.options.clusterType != undefined && this.options.clusterType !== def.type()) {
+					this.events.emitInfo(`Only processing cluster type ${this.options.clusterType}, cluster ${def.name()} is ${def.type()}, skipping...` );
+					return;
+				}
 				const type = typeDefinitions[def.type()];
 				if (!type) { throw new Error(`UnSupported Type ${def.type()}`); }
 				// Merge the type definition then the base definition
 				def.apply(type);
 			} else {
-				this.events.emitWarn(`No Type configured for cluster ${def.name()}, skipping` );
+				this.events.emitError(`No Type configured for cluster ${def.name()}, stopping...` );
+				throw new Error(`No Type found for cluster ${def.name()}`);
 			}
 			// Merge with the Base Definitions.
 			def.apply(baseClusterDef);
 			this.events.emitInfo("Done Merging Cluster Definitions");
 			if (def.disabled()) {
-				this.events.emitInfo(`Cluster ${def.name()} is disabled, skipping`);
+				this.events.emitInfo(`Cluster ${def.name()} is disabled, skipping...`);
 				return;
 			} else {
 				// apply the correct image tag based on cluster type or resource type

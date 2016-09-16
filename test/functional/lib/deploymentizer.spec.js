@@ -167,15 +167,54 @@ describe("Deploymentizer", () => {
 				expect(deployer).to.exist;
 				// generate the files from our test fixtures
 				yield deployer.process();
+
+				const testClusterDir = fse.existsSync(path.join(os.tmpdir(), "generated", "test-fixture"));
+				expect(testClusterDir).to.be.true;
+
 				// disabled this cluster
-				const clusterDir = fse.existsSync(path.join(os.tmpdir(), "generated", "disabled-test-fixture"));
-				expect(clusterDir).to.be.false;
+				const disabledClusterDir = fse.existsSync(path.join(os.tmpdir(), "generated", "disabled-test-fixture"));
+				expect(disabledClusterDir).to.be.false;
 
 				done();
 			})().catch( (err) => {
 				done(err);
 			});
 		});
+
+		it("should generate test clusters only", (done) => {
+
+			Promise.coroutine(function* () {
+				fse.mkdirsSync(path.join(os.tmpdir(), "generated"));
+				let conf = yield yamlHandler.loadFile("/test/fixture/kit.yaml");
+
+				const deployer = new Deploymentizer ({
+						clean: true,
+						save: true,
+						conf: conf,
+						clusterType: "test"
+					});
+				expect(deployer).to.exist;
+				// generate the files from our test fixtures
+				yield deployer.process();
+
+				const testClusterDir = fse.existsSync(path.join(os.tmpdir(), "generated", "test-fixture"));
+				expect(testClusterDir).to.be.true;
+
+				// disabled this cluster
+				const disabledClusterDir = fse.existsSync(path.join(os.tmpdir(), "generated", "disabled-test-fixture"));
+				expect(disabledClusterDir).to.be.false;
+
+				// Incorrect cluster "type"
+				const otherClusterDir = fse.existsSync(path.join(os.tmpdir(), "generated", "other-test-fixture"));
+				expect(otherClusterDir).to.be.false;
+
+
+				done();
+			})().catch( (err) => {
+				done(err);
+			});
+		});
+
 
 	});
 });
