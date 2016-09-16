@@ -394,7 +394,7 @@ You can create a service without an associated `deployment` resource. Include th
 
 #### Limiting Cluster generation
 
-If you have a large number of clusters you can limit the clusters that generated to save time and resources. There are 2 options for doing this, one is to set the type of cluster you want generated. Deploymentizer excepts `clusterType` as an options, and if present will only generate clusters that have the matching `metadata.type` tag. The other option is to mark specific clusters as disabled, using the `metadata.disable: true` field.
+If you have a large number of clusters you can limit the clusters that generated to save time and resources. There are 2 options for doing this, one is to set the type of cluster you want generated. Deploymentizer excepts `clusterType` as an option, and if present will only generate clusters that have the matching `metadata.type` tag. The other option is to mark specific clusters as disabled, using the `metadata.disable: true` field.
 
 
 ## Running

@@ -117,7 +117,6 @@ class Deploymentizer {
 	 */
 	processClusterDef(def, typeDefinitions, baseClusterDef, imageResources, configPlugin) {
 		return Promise.try( () => {
-			console.log(`Processing cluster  ${def.name()} with type ${def.type()}`);
 			if (def.type()) {
 				if (this.options.clusterType != undefined && this.options.clusterType !== def.type()) {
 					this.events.emitInfo(`Only processing cluster type ${this.options.clusterType}, cluster ${def.name()} is ${def.type()}, skipping...` );
