@@ -2,6 +2,7 @@
 
 var expect = require("chai").expect;
 const Promise = require("bluebird");
+const sinon = require("sinon");
 
 describe("ENV API Client Configuration plugin", () =>  {
 
@@ -45,6 +46,174 @@ describe("ENV API Client Configuration plugin", () =>  {
       expect(apiConfig.timeout).to.equal(15000);
 			done();
 		});
+	});
+
+	describe("Client calls", () =>  {
+
+		it("should only call request to env-api once, and convert values", (done) => {
+			Promise.coroutine(function* () {
+				const responseOne = new Promise( (resolve, reject) => {
+					resolve(
+					{
+					  "env": {
+					    "GET_HOSTS_FROM": "dns",
+					    "MAX_RETRIES": "0",
+					    "MEMBER_HOSTS": "mongoreplica-01-svc:27017,mongoreplica-02-svc:27017,mongoreplica-03-svc:27017",
+					    "REPLICA_SET_NAME": "rs0",
+					    "WAIT_TIME": "60000"
+					  },
+					  "k8s": {
+					    "branch": "develop"
+					  }
+					});
+				});
+				var rp = sinon.stub();
+				rp.onFirstCall().returns(responseOne);
+					// .onSecondCall().returns(2);
+	      const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN", altBranch: true };
+				const ApiConfig = require("../../../src/plugin/env-api-client");
+	      const apiConfig = new ApiConfig(options);
+				apiConfig.request = rp;
+
+				const service = {
+					name: "mongo-init",
+					annotations: {
+						"kit-deploymentizer/env-api-service": "mongo-init",
+						"kit-deploymentizer/env-api-branch": "develop"
+					}
+				}
+				const envs = yield apiConfig.fetch(service, "example-cluster");
+				console.log("Resolved ENVS: %j", envs);
+				expect(rp.callCount).to.equal(1);
+				let calledWith = rp.getCall(0);
+				// assert that the second call was to testing branch
+				expect(calledWith.args[0].qs.branch).to.equal("develop");
+				expect(calledWith.args[0].qs.env).to.equal("example-cluster");
+				expect(envs.branch).to.equal("develop");
+				expect(envs.env.length).to.equal(5);
+				expect(envs.env[0].name).to.equal("GET_HOSTS_FROM");
+				expect(envs.env[0].value).to.equal("dns");
+				expect(envs.env[1].name).to.equal("MAX_RETRIES");
+				expect(envs.env[1].value).to.equal("0");
+				done();
+			})().catch( (err) => {
+				done(err);
+			});
+		});
+
+		it("should call request to env-api twice, and get correct values", (done) => {
+			Promise.coroutine(function* () {
+				// ResponseOne is returned that says use testing branch,
+				// Request is invoked again passing in branch testing
+				// those values are used, but initial requests branch is kept.
+				const responseOne = new Promise( (resolve, reject) => {
+					resolve(
+					{
+					  "env": {
+					    "GET_HOSTS_FROM": "dns",
+					    "MAX_RETRIES": "0",
+					    "WAIT_TIME": "60000"
+					  },
+					  "k8s": {
+					    "branch": "testing"
+					  }
+					});
+				});
+				const responseTwo = new Promise( (resolve, reject) => {
+					resolve(
+					{
+					  "env": {
+					    "GET_HOSTS_FROM": "dns",
+					    "MAX_RETRIES": "5",
+					    "WAIT_TIME": "10000"
+					  },
+					  "k8s": {
+					    "branch": "develop"
+					  }
+					});
+				});
+				var rp = sinon.stub();
+				rp.onFirstCall().returns(responseOne)
+					.onSecondCall().returns(responseTwo);
+	      const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN", altBranch: true };
+				const ApiConfig = require("../../../src/plugin/env-api-client");
+	      const apiConfig = new ApiConfig(options);
+				apiConfig.request = rp;
+
+				const service = {
+					name: "mongo-init",
+					annotations: {
+						"kit-deploymentizer/env-api-service": "mongo-init",
+						"kit-deploymentizer/env-api-branch": "develop"
+					}
+				}
+				const envs = yield apiConfig.fetch(service, "example-cluster");
+				console.log("Resolved ENVS: %j", envs);
+				expect(rp.callCount).to.equal(2);
+				let calledWith = rp.getCall(1);
+				// assert that the second call was to testing branch
+				expect(calledWith.args[0].qs.branch).to.equal("testing");
+				expect(envs.branch).to.equal("testing");
+				expect(envs.env.length).to.equal(3);
+				expect(envs.env[1].name).to.equal("MAX_RETRIES");
+				expect(envs.env[1].value).to.equal("5");
+				expect(envs.env[2].name).to.equal("WAIT_TIME");
+				expect(envs.env[2].value).to.equal("10000");
+				done();
+			})().catch( (err) => {
+				done(err);
+			});
+		});
+
+		it("should call request to env-api once, altbranch disabled", (done) => {
+			Promise.coroutine(function* () {
+				// ResponseOne is returned that says use testing branch,
+				// Request is invoked again passing in branch testing
+				// those values are used, but initial requests branch is kept.
+				const responseOne = new Promise( (resolve, reject) => {
+					resolve(
+					{
+					  "env": {
+					    "GET_HOSTS_FROM": "dns",
+					    "MAX_RETRIES": "0",
+					    "WAIT_TIME": "60000"
+					  },
+					  "k8s": {
+					    "branch": "testing"
+					  }
+					});
+				});
+				var rp = sinon.stub();
+				rp.onFirstCall().returns(responseOne)
+					.onSecondCall().returns({});
+	      const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN" };
+				const ApiConfig = require("../../../src/plugin/env-api-client");
+	      const apiConfig = new ApiConfig(options);
+				apiConfig.request = rp;
+
+				const service = {
+					name: "mongo-init",
+					annotations: {
+						"kit-deploymentizer/env-api-service": "mongo-init",
+						"kit-deploymentizer/env-api-branch": "develop"
+					}
+				}
+				const envs = yield apiConfig.fetch(service, "example-cluster");
+				console.log("Resolved ENVS: %j", envs);
+				expect(rp.callCount).to.equal(1);
+				expect(envs.branch).to.equal("testing");
+				expect(envs.env.length).to.equal(3);
+				expect(envs.env[1].name).to.equal("MAX_RETRIES");
+				expect(envs.env[1].value).to.equal("0");
+				expect(envs.env[2].name).to.equal("WAIT_TIME");
+				expect(envs.env[2].value).to.equal("60000");
+				done();
+			})().catch( (err) => {
+				done(err);
+			});
+
+		});
+
 	});
 
 });
