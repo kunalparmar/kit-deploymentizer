@@ -8,7 +8,7 @@ const eventHandler = require("../util/event-handler");
  * Class for accessing the EnvApi Service.
  */
 class EnvApiClient {
-	
+
 	/**
 	 * Requires the apiUrl and apiToken to be set included as parameters.
 	 * @param  {[type]} options
@@ -20,6 +20,8 @@ class EnvApiClient {
 		this.apiUrl = options.apiUrl;
 		this.apiToken = options.apiToken;
 		this.timeout = (options.timeout || 15000);
+		this.k8sBranch = ( (options.k8sBranch === true) || false);
+		this.request = rp;
 	}
 
 	/**
@@ -33,13 +35,13 @@ class EnvApiClient {
 		return "kit-deploymentizer/env-api-branch";
 	}
 	/**
-	 * The provided service resource needs to contain a annotation specifiying the service name 
-	 * to use when invoking the env-api service. If this annotation is not present the request 
+	 * The provided service resource needs to contain an annotation specifiying the service name
+	 * to use when invoking the env-api service. If this annotation is not present the request
 	 * is skipped. The annotation is `kit-deploymentizer/env-api-service: [GIT-HUB-PROJECT-NAME]`
-	 * 
-	 * Another, optional, annotation sets the branch to use by the env-api service. This annotation 
-	 * is `kit-deploymentizer/env-api-branch: [GIT-HUB-BRANCH-NAME]` 
-	 * 
+	 *
+	 * Another, optional, annotation sets the branch to use by the env-api service. This annotation
+	 * is `kit-deploymentizer/env-api-branch: [GIT-HUB-BRANCH-NAME]`
+	 *
 	 * Expects JSON results in the format of:
 	 * {
 	 *   env: {
@@ -69,43 +71,59 @@ class EnvApiClient {
 			if (service.annotations || service.annotations[EnvApiClient.annotationBranchName]) {
 				query.branch = service.annotations[EnvApiClient.annotationBranchName]
 			}
-			const options = {
+			let options = {
 				uri: uri,
 				qs: query,
 				headers: { 'X-Auth-Token': this.apiToken },
 				json: true,
 				timeout: this.timeout
 			};
-			let config = yield rp(options);
-
-			// convert env section to correct format
+			let config = yield this.request(options);
 			let result = {};
-			result.env = []
-			if ( config.env ) {
-				Object.keys(config.env).forEach( (key) => {
-					result.env.push({
-						name: key,
-						value: config.env[key]
-					});
-				});
+			result = this.convertK8sResult(config, result);
+			if (this.k8sBranch && result.branch && result.branch !== query.branch) {
+				eventHandler.emitInfo(`Pulling envs from ${result.branch} branch`);
+				options.qs.branch = result.branch;
+				config = yield this.request(options);
 			}
-			// move the k8s values to the base object
-			if (config.k8s && typeof config.k8s === 'object') {
-				let props = config.k8s;
-				// if we get back a cluster level object, just parse that - otherwise use default
-				if (config.k8s[cluster]) {
-					props = config.k8s[cluster]
-				} 
-				Object.keys(props).forEach( (key) => {
-					result[key] = props[key];
-				});
-			}
+			result = this.convertEnvResult(config, result);
 			return result;
 		}).bind(this)().catch(function (err) {
 			// API call failed...
 			eventHandler.emitFatal(`Unable to fetch or convert ENV Config ${JSON.stringify(err)}`);
 			throw err;
 		});
+	}
+
+	/**
+	 * Converts the returned results from the env-api service into the expected format.
+	 */
+	convertK8sResult(config, result) {
+		// move the k8s values to the base object
+		if (config.k8s && typeof config.k8s === 'object') {
+			let props = config.k8s;
+			Object.keys(props).forEach( (key) => {
+				result[key] = props[key];
+			});
+		}
+		return result;
+	}
+
+	/**
+	 * Converts the returned results from the env-api service into the expected format.
+	 */
+	convertEnvResult(config, result) {
+		// convert env section to correct format
+		result.env = []
+		if ( config.env ) {
+			Object.keys(config.env).forEach( (key) => {
+				result.env.push({
+					name: key,
+					value: config.env[key]
+				});
+			});
+		}
+		return result;
 	}
 
 }
