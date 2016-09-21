@@ -71,6 +71,10 @@ class Generator {
 			// Create the output directory if it already does not exist.
 			yield createClusterDirectory(this.options.exportPath);
 			const resources = this.options.clusterDef.resources();
+			if (_.isNil(resources)) {
+				eventHandler.emitWarn(`No Resources defined in cluster ${this.options.clusterDef.name()}`);
+				return;
+			}
 			if (this.options.resource) {
 				// processing single resource
 				let resource = resources[this.options.resource]
@@ -176,8 +180,8 @@ class Generator {
 					localConfig[containerName].env = env;
 				}
 
-				// If an image is not predefined, try to find the image tag 
-				//	 (this defines the name of the directory containing images based on branch), 
+				// If an image is not predefined, try to find the image tag
+				//	 (this defines the name of the directory containing images based on branch),
 				//	 if not defined skip
 				if (!localConfig[containerName].image) {
 					if (artifact.image_tag) {
