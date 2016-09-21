@@ -1,0 +1,5 @@
+kind: ClusterNamespace
+metadata:
+  name: empty-test-fixture
+  branch: testing
+  type: test

@@ -21,7 +21,22 @@ const configStub = {
 }
 
 describe("Generator", () => {
-	describe("create service file", () => {
+	describe("with empty cluster", () => {
+		it("should not fail", (done) => {
+			return Promise.coroutine(function* () {
+				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture/empty-clusters");
+				const clusterDef = clusterDefs[0];
+				const generator = new Generator(clusterDef, {}, "", os.tmpdir(), true, configStub);
+				expect(clusterDef).to.exist;
+				yield generator.process();
+				done();
+			})().catch( (err) => {
+				done(err);
+			});
+		});
+	});
+
+	describe("with valid cluster", () => {
 		it("should create valid service file", (done) => {
 			return Promise.coroutine(function* () {
 				const clusterDefs = yield yamlHandler.loadClusterDefinitions("./test/fixture/clusters");
