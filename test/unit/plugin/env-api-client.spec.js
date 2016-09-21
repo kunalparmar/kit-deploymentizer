@@ -9,8 +9,8 @@ describe("ENV API Client Configuration plugin", () =>  {
 	describe("Load Client", () =>  {
 		it("should fail with validation error", (done) => {
 			try {
-  			const ApiConfig = require("../../../src/plugin/env-api-client");
-        const apiConfig = new ApiConfig();
+				const ApiConfig = require("../../../src/plugin/env-api-client");
+				const apiConfig = new ApiConfig();
 				done(new Error("Should have failed"));
 			} catch(err) {
 				done();
@@ -19,9 +19,9 @@ describe("ENV API Client Configuration plugin", () =>  {
 
 		it("should fail with validation error", (done) => {
 			try {
-      const options = { api: "http://somehost/v1", Token: "SOME-TOKEN"}
+			const options = { api: "http://somehost/v1", Token: "SOME-TOKEN"}
 			const ApiConfig = require("../../../src/plugin/env-api-client");
-      const apiConfig = new ApiConfig(options);
+			const apiConfig = new ApiConfig(options);
 				done(new Error("Should have failed"));
 			} catch(err) {
 				done();
@@ -29,21 +29,21 @@ describe("ENV API Client Configuration plugin", () =>  {
 		});
 
 		it("should load plugin successfully", (done) => {
-      const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN", timeout: 20000}
+			const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN", timeout: 20000}
 			const ApiConfig = require("../../../src/plugin/env-api-client");
-      const apiConfig = new ApiConfig(options);
-      expect(apiConfig).to.exist;
-      expect(apiConfig.apiToken).to.equal("SOME-TOKEN");
-      expect(apiConfig.apiUrl).to.equal("http://somehost/v1");
-      expect(apiConfig.timeout).to.equal(20000);
+			const apiConfig = new ApiConfig(options);
+			expect(apiConfig).to.exist;
+			expect(apiConfig.apiToken).to.equal("SOME-TOKEN");
+			expect(apiConfig.apiUrl).to.equal("http://somehost/v1");
+			expect(apiConfig.timeout).to.equal(20000);
 			done();
 		});
 		it("should load plugin successfully and default timeout", (done) => {
-      const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN"}
+			const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN"}
 			const ApiConfig = require("../../../src/plugin/env-api-client");
-      const apiConfig = new ApiConfig(options);
-      expect(apiConfig).to.exist;
-      expect(apiConfig.timeout).to.equal(15000);
+			const apiConfig = new ApiConfig(options);
+			expect(apiConfig).to.exist;
+			expect(apiConfig.timeout).to.equal(15000);
 			done();
 		});
 	});
@@ -55,24 +55,24 @@ describe("ENV API Client Configuration plugin", () =>  {
 				const responseOne = new Promise( (resolve, reject) => {
 					resolve(
 					{
-					  "env": {
-					    "GET_HOSTS_FROM": "dns",
-					    "MAX_RETRIES": "0",
-					    "MEMBER_HOSTS": "mongoreplica-01-svc:27017,mongoreplica-02-svc:27017,mongoreplica-03-svc:27017",
-					    "REPLICA_SET_NAME": "rs0",
-					    "WAIT_TIME": "60000"
-					  },
-					  "k8s": {
-					    "branch": "develop"
-					  }
+						"env": {
+							"GET_HOSTS_FROM": "dns",
+							"MAX_RETRIES": "0",
+							"MEMBER_HOSTS": "mongoreplica-01-svc:27017,mongoreplica-02-svc:27017,mongoreplica-03-svc:27017",
+							"REPLICA_SET_NAME": "rs0",
+							"WAIT_TIME": "60000"
+						},
+						"k8s": {
+							"branch": "develop"
+						}
 					});
 				});
 				var rp = sinon.stub();
 				rp.onFirstCall().returns(responseOne);
 					// .onSecondCall().returns(2);
-	      const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN", altBranch: true };
+				const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN", k8sBranch: true };
 				const ApiConfig = require("../../../src/plugin/env-api-client");
-	      const apiConfig = new ApiConfig(options);
+				const apiConfig = new ApiConfig(options);
 				apiConfig.request = rp;
 
 				const service = {
@@ -83,7 +83,7 @@ describe("ENV API Client Configuration plugin", () =>  {
 					}
 				}
 				const envs = yield apiConfig.fetch(service, "example-cluster");
-				console.log("Resolved ENVS: %j", envs);
+				// console.log("Resolved ENVS: %j", envs);
 				expect(rp.callCount).to.equal(1);
 				let calledWith = rp.getCall(0);
 				// assert that the second call was to testing branch
@@ -109,35 +109,35 @@ describe("ENV API Client Configuration plugin", () =>  {
 				const responseOne = new Promise( (resolve, reject) => {
 					resolve(
 					{
-					  "env": {
-					    "GET_HOSTS_FROM": "dns",
-					    "MAX_RETRIES": "0",
-					    "WAIT_TIME": "60000"
-					  },
-					  "k8s": {
-					    "branch": "testing"
-					  }
+						"env": {
+							"GET_HOSTS_FROM": "dns",
+							"MAX_RETRIES": "0",
+							"WAIT_TIME": "60000"
+						},
+						"k8s": {
+							"branch": "testing"
+						}
 					});
 				});
 				const responseTwo = new Promise( (resolve, reject) => {
 					resolve(
 					{
-					  "env": {
-					    "GET_HOSTS_FROM": "dns",
-					    "MAX_RETRIES": "5",
-					    "WAIT_TIME": "10000"
-					  },
-					  "k8s": {
-					    "branch": "develop"
-					  }
+						"env": {
+							"GET_HOSTS_FROM": "dns",
+							"MAX_RETRIES": "5",
+							"WAIT_TIME": "10000"
+						},
+						"k8s": {
+							"branch": "develop"
+						}
 					});
 				});
 				var rp = sinon.stub();
 				rp.onFirstCall().returns(responseOne)
 					.onSecondCall().returns(responseTwo);
-	      const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN", altBranch: true };
+				const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN", k8sBranch: true };
 				const ApiConfig = require("../../../src/plugin/env-api-client");
-	      const apiConfig = new ApiConfig(options);
+				const apiConfig = new ApiConfig(options);
 				apiConfig.request = rp;
 
 				const service = {
@@ -148,7 +148,7 @@ describe("ENV API Client Configuration plugin", () =>  {
 					}
 				}
 				const envs = yield apiConfig.fetch(service, "example-cluster");
-				console.log("Resolved ENVS: %j", envs);
+				// console.log("Resolved ENVS: %j", envs);
 				expect(rp.callCount).to.equal(2);
 				let calledWith = rp.getCall(1);
 				// assert that the second call was to testing branch
@@ -165,7 +165,7 @@ describe("ENV API Client Configuration plugin", () =>  {
 			});
 		});
 
-		it("should call request to env-api once, altbranch disabled", (done) => {
+		it("should call request to env-api once, k8sBranch disabled", (done) => {
 			Promise.coroutine(function* () {
 				// ResponseOne is returned that says use testing branch,
 				// Request is invoked again passing in branch testing
@@ -173,22 +173,22 @@ describe("ENV API Client Configuration plugin", () =>  {
 				const responseOne = new Promise( (resolve, reject) => {
 					resolve(
 					{
-					  "env": {
-					    "GET_HOSTS_FROM": "dns",
-					    "MAX_RETRIES": "0",
-					    "WAIT_TIME": "60000"
-					  },
-					  "k8s": {
-					    "branch": "testing"
-					  }
+						"env": {
+							"GET_HOSTS_FROM": "dns",
+							"MAX_RETRIES": "0",
+							"WAIT_TIME": "60000"
+						},
+						"k8s": {
+							"branch": "testing"
+						}
 					});
 				});
 				var rp = sinon.stub();
 				rp.onFirstCall().returns(responseOne)
 					.onSecondCall().returns({});
-	      const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN" };
+				const options = { apiUrl: "http://somehost/v1", apiToken: "SOME-TOKEN" };
 				const ApiConfig = require("../../../src/plugin/env-api-client");
-	      const apiConfig = new ApiConfig(options);
+				const apiConfig = new ApiConfig(options);
 				apiConfig.request = rp;
 
 				const service = {
@@ -199,7 +199,7 @@ describe("ENV API Client Configuration plugin", () =>  {
 					}
 				}
 				const envs = yield apiConfig.fetch(service, "example-cluster");
-				console.log("Resolved ENVS: %j", envs);
+				// console.log("Resolved ENVS: %j", envs);
 				expect(rp.callCount).to.equal(1);
 				expect(envs.branch).to.equal("testing");
 				expect(envs.env.length).to.equal(3);

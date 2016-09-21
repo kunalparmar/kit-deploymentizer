@@ -20,7 +20,7 @@ class EnvApiClient {
 		this.apiUrl = options.apiUrl;
 		this.apiToken = options.apiToken;
 		this.timeout = (options.timeout || 15000);
-		this.altBranch = ( (options.altBranch === true) || false);
+		this.k8sBranch = ( (options.k8sBranch === true) || false);
 		this.request = rp;
 	}
 
@@ -35,7 +35,7 @@ class EnvApiClient {
 		return "kit-deploymentizer/env-api-branch";
 	}
 	/**
-	 * The provided service resource needs to contain a annotation specifiying the service name
+	 * The provided service resource needs to contain an annotation specifiying the service name
 	 * to use when invoking the env-api service. If this annotation is not present the request
 	 * is skipped. The annotation is `kit-deploymentizer/env-api-service: [GIT-HUB-PROJECT-NAME]`
 	 *
@@ -81,7 +81,7 @@ class EnvApiClient {
 			let config = yield this.request(options);
 			let result = {};
 			result = this.convertK8sResult(config, result);
-			if (this.altBranch && result.branch && result.branch !== query.branch) {
+			if (this.k8sBranch && result.branch && result.branch !== query.branch) {
 				eventHandler.emitInfo(`Pulling envs from ${result.branch} branch`);
 				options.qs.branch = result.branch;
 				config = yield this.request(options);
@@ -96,7 +96,7 @@ class EnvApiClient {
 	}
 
 	/**
-   * Converts the returned results from the env-api service into the expected format.
+	 * Converts the returned results from the env-api service into the expected format.
 	 */
 	convertK8sResult(config, result) {
 		// move the k8s values to the base object
@@ -110,7 +110,7 @@ class EnvApiClient {
 	}
 
 	/**
-   * Converts the returned results from the env-api service into the expected format.
+	 * Converts the returned results from the env-api service into the expected format.
 	 */
 	convertEnvResult(config, result) {
 		// convert env section to correct format
