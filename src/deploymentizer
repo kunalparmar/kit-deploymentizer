@@ -85,7 +85,7 @@ loadConf(program.conf).then( (conf) => {
 		workdir: program.workdir,
 		conf: conf,
 		resource: program.resource,
-		type: program.clusterType
+		clusterType: program.clusterType
 	});
 	// Run the deploymentizer
 	return deploymentizer.process()
